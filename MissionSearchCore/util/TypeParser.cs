@@ -38,6 +38,18 @@ namespace MissionSearch.Util
             return double.TryParse(str, out value) ? value : 0;
         }
 
+        public static DateTime? ParseDateTime(string str)
+        {
+            DateTime date;
+
+            if (DateTime.TryParse(str, out date))
+            {
+                return date;
+            }
+
+            return null;
+        }
+
         public static DateTime? ParseDateExact(string str)
         {
             DateTimeOffset date;

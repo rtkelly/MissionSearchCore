@@ -17,22 +17,38 @@ namespace MissionSearch
             Percentage = 3,
         }
 
-       
-
         public string FieldName { get; set; }
+        
         public string FieldLabel { get; set; }
+        
         public List<NumRange> Range { get; set; }
+        
         public FormatType NumericFormat { get; set; }
+        
         public int Order { get; set; }
+
+        public RefinementType RefinementOption { get; set; }
 
         public NumRangeFacet(string fieldName, string fieldLabel)
         {
             FieldName = fieldName;
             FieldLabel = fieldLabel;
-
+            RefinementOption = RefinementType.Refinement;
             Range = new List<NumRange>();
             NumericFormat = FormatType.Numeric;
         }
+
+        public NumRangeFacet(string fieldName, string fieldLabel, RefinementType refinementOption)
+        {
+            FieldName = fieldName;
+            FieldLabel = fieldLabel;
+            RefinementOption = refinementOption;
+            Range = new List<NumRange>();
+            NumericFormat = FormatType.Numeric;
+        }
+        
+
+        public FacetSortOption Sort { get; set; }
     }
 
     public class NumRange

@@ -21,7 +21,7 @@ namespace MissionSearch
         public string FieldLabel { get; set; }
         public int Order { get; set; }
         public FacetSortOption Sort { get; set; }
-        public RefinementTypes RefinementOption { get; set; }
+        public RefinementType RefinementOption { get; set; }
         
 
 
@@ -30,14 +30,25 @@ namespace MissionSearch
             FieldName = fieldName;
             FieldLabel = fieldName;
             Sort = FacetSortOption.Count;
+            RefinementOption = RefinementType.Refinement;
         }
-
+                
         public FieldFacet(string fieldName, string fieldLabel)
         {
             FieldName = fieldName;
             FieldLabel = fieldLabel;
             Sort = FacetSortOption.Count;
+            RefinementOption = RefinementType.Refinement;
         }
+
+        public FieldFacet(string fieldName, string fieldLabel, RefinementType refinementOption)
+        {
+            FieldName = fieldName;
+            FieldLabel = fieldLabel;
+            Sort = FacetSortOption.Count;
+            RefinementOption = refinementOption;
+        }
+
 
 
     }

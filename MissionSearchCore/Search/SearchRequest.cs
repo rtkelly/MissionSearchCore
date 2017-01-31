@@ -28,7 +28,7 @@ namespace MissionSearch
                 
         //public bool SingleSelectRefinement { get; set; }
                 
-        public RefinementTypes RefinementType { get; set; }
+        //public RefinementType RefinementType { get; set; }
 
         public string Language { get; set; }
 
@@ -46,7 +46,7 @@ namespace MissionSearch
             Sort = new List<SortOrder>();
             PageSize = 50;
             CurrentPage = 1;
-            RefinementType = RefinementTypes.Refinement;
+            //RefinementType = RefinementType.Refinement;
             
         }
                 

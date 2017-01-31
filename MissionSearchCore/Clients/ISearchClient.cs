@@ -2,40 +2,54 @@
 
 namespace MissionSearch.Clients
 {
-    public interface ISearchClient<T> where T : ISearchDocument 
+    public interface ISearchClient
     {
         int Timeout { get; set; }
 
-        string SrchConnStr { get;  }
+        string SrchConnStr { get; }
 
-        SearchResponse<T> Search(SearchRequest request);
+        void Post(string jsonDoc);
+
+        void Delete(string query);
+
+        SearchResponse Search(SearchRequest request);
+    }
+
+    public interface ISearchClient<T> : ISearchClient where T : ISearchDocument 
+    {
+        //string SrchConnStr { get;  }
+
+        new SearchResponse<T> Search(SearchRequest request);
         
         SearchResponse<T> Search(string queryText);
 
-        List<T> SearchAll(string queryText);
+        List<T> GetAll(string queryText);
 
-        T Extract(T doc, byte[] fileBytes);
+        string FileExtract(byte[] fileBytes);
+
+        //T Extract(T doc, byte[] fileBytes);
         
         void Post(T doc);
+
+        //void Post(string jsonDoc);
         
         void DeleteById(string id);
 
-        void Delete(string query);
-        
-
         List<string> GetTerms(string fieldName, string term);
             
-        void PostInit();
+        //void PostInit();
         
-        void PostCommit();
+        void Commit();
 
         void Close();
 
         void Reload();
         
-        List<string> GetSynonyms();
+        //List<string> GetSynonyms();
 
         //IAutoCompleteClient<T> QueryIndexer { get; set; }
 
     }
+
+   
 }

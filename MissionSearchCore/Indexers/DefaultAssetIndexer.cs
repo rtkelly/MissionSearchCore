@@ -1,13 +1,9 @@
-﻿using MissionSearch.Attributes;
-using MissionSearch.Clients;
+﻿using MissionSearch.Clients;
 using MissionSearch.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
+using System.Net;
 
 namespace MissionSearch.Indexers
 {
@@ -19,12 +15,14 @@ namespace MissionSearch.Indexers
 
         int Threshold; // max file size in bytes
 
-        int SourceId; 
+        int SourceId;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="srchClient"></param>
+        /// <param name="threshold"></param>
+        /// <param name="sourceId"></param>
         public DefaultAssetIndexer(ISearchClient<T> srchClient, int threshold, int sourceId)
         {
             if (srchClient == null)
@@ -34,52 +32,57 @@ namespace MissionSearch.Indexers
             Threshold = threshold;
             SourceId = sourceId;
 
-            _logger = SearchFactory<T>.Logger;
+            _logger = SearchFactory.Logger;
                         
         }
 
-        public IndexResults RunFullIndex(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var results = RunUpdate(assets, statusCallback, indexerCallback);
+            var items = assets as IList<ContentCrawlParameters> ?? assets.ToList();
 
-            results.DeleteCnt = PurgeDeletedDocuments(assets);
+            var results = RunUpdate(items, statusCallback, indexerCallback);
+
+            results.DeleteCnt = PurgeDeletedDocuments(items.Select(p => p.ContentItem as ISearchableAsset).ToList());
 
             return results;
         }
+        
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="assets"></param>
+        /// <param name="parameters"></param>
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
         /// <returns></returns>
-        public IndexResults RunUpdate(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
             var results = new IndexResults();
                         
             results.TotalCnt = 0;
             results.ErrorCnt = 0;
            
-            foreach (var asset in assets)
+            foreach (var asset in parameters)
             {
                 try
                 {
+                    /*
                     if (asset.NotSearchable)
                     {
-                        if(SearchClient.Search("id:" + asset.SearchId).Results.Any())
+                        if(SearchClient.Search("id:" + asset._ContentID).Results.Any())
                         {
-                            SearchClient.Delete("id:" + asset.SearchId);
+                            SearchClient.Delete("id:" + asset._ContentID);
                             results.DeleteCnt++;
                         }
                         continue;
                     }
+                     * */
 
-                    var doc = CreateSolrDoc(asset, results);
+                    var doc = CreateSearchDoc(asset, results);
 
                     if (indexerCallback != null)
                     {
-                        doc = indexerCallback(doc, asset);
+                        doc = indexerCallback(doc, asset.ContentItem);
                     }
 
                     if (statusCallback != null)
@@ -103,12 +106,12 @@ namespace MissionSearch.Indexers
                 }
                 catch(Exception ex)
                 {
-                    LogError(string.Format("Indexing failed for ID: {0} NAME:{1}. {2} {3}", asset.SearchId, asset.Name, ex.Message, ex.StackTrace));
+                    LogError(string.Format("Indexing failed for ID: {0} NAME:{1}. {2} {3}", asset.ContentItem._ContentID, asset.ContentItem.Name, ex.Message, ex.StackTrace));
                     results.ErrorCnt++;
                 }
             }
 
-            SearchClient.PostCommit();
+            SearchClient.Commit();
             SearchClient.Close();
                      
             return results;
@@ -121,15 +124,27 @@ namespace MissionSearch.Indexers
         /// <returns></returns>
         public T Update(ISearchableAsset asset)
         {
-            var doc = CreateSolrDoc(asset, null);
+            var parameters = new ContentCrawlParameters() { ContentItem = asset };
+            var doc = CreateSearchDoc(parameters, null);
 
             SearchClient.Post(doc);
-            SearchClient.PostCommit();
+            SearchClient.Commit();
             SearchClient.Close();
 
             return doc;
         }
 
+
+        public T Update(ContentCrawlParameters parameters)
+        {
+            var doc = CreateSearchDoc(parameters, null);
+
+            SearchClient.Post(doc);
+            SearchClient.Commit();
+            SearchClient.Close();
+
+            return doc;
+        }
 
         /// <summary>
         /// 
@@ -137,12 +152,14 @@ namespace MissionSearch.Indexers
         /// <param name="assets"></param>
         public int Delete(IEnumerable<ISearchableAsset> assets)
         {
-            foreach (var asset in assets)
+            var items = assets as IList<ISearchableAsset> ?? assets.ToList();
+
+            foreach (var asset in items)
             {
-                SearchClient.DeleteById(asset.SearchId);
+                SearchClient.DeleteById(asset._ContentID);
             }
 
-            return assets.Count();
+            return items.Count();
         }
 
                
@@ -152,34 +169,32 @@ namespace MissionSearch.Indexers
         /// <param name="asset"></param>
         public void Delete(ISearchableAsset asset)
         {
-            SearchClient.DeleteById(asset.SearchId);
+            SearchClient.DeleteById(asset._ContentID);
         }
 
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="asset"></param>
+        /// <param name="parameters"></param>
+        /// <param name="results"></param>
         /// <returns></returns>
-        private T CreateSolrDoc(ISearchableAsset asset, IndexResults results)
+        private T CreateSearchDoc(ContentCrawlParameters parameters, IndexResults results)
         {
             var doc = (T)Activator.CreateInstance(typeof(T), new object[] { });
 
-            doc.id = asset.SearchId;
-            doc.title = asset.Name;
-            doc.url = asset.SearchUrl;
-            doc.timestamp = asset.Changed;
+            doc.id = parameters.ContentItem._ContentID;
+            //doc.title = parameters.ContentItem.Name;
             doc.sourceid = SourceId;
-                       
-            var assetProps = asset.GetType().GetProperties();
+
             var docProps = doc.GetType().GetProperties();
                         
-            var pageCrawlProps = asset.CrawlProperties as CrawlerContentSettings;
+            //var pageCrawlProps = parameters.CrawlProperties as ContentCrawlParameters;
 
             // load crawl properties
-            if (pageCrawlProps != null && pageCrawlProps.Content != null && pageCrawlProps.Content.Any())
+            if (parameters.Content != null && parameters.Content.Any())
             {
-                foreach (var crawlPropContent in pageCrawlProps.Content)
+                foreach (var crawlPropContent in parameters.Content)
                 {
                     var docProp = docProps.FirstOrDefault(p => p.Name == crawlPropContent.Name);
 
@@ -190,9 +205,9 @@ namespace MissionSearch.Indexers
                 }
             }
 
-            var pageBaseTypes = new List<System.Type>();
+            var pageBaseTypes = new List<Type>();
 
-            var baseType = asset.GetType().BaseType;
+            var baseType = parameters.GetType().BaseType;
 
             while (baseType != null)
             {
@@ -204,24 +219,40 @@ namespace MissionSearch.Indexers
 
             foreach (var bType in pageBaseTypes)
             {
-                GetBaseProperties(asset, doc, docProps, bType);
+                GetBaseProperties(parameters.ContentItem, doc, docProps, bType);
             }
                        
 
-            if (!asset.DisableExtract)
+            if (!((ISearchableAsset)parameters.ContentItem).DisableExtract)
             {
                 try
                 {
-                    var blob = asset.AssetBlob;
+                    var blob = ((ISearchableAsset)parameters.ContentItem).AssetBlob;
 
                     if (blob != null && blob.Length <= Threshold)
                     {
-                        doc = SearchClient.Extract(doc, blob);
+                        //doc = SearchClient.Extract(doc, blob);
+                        var responseXml = SearchClient.FileExtract(blob);
+
+                        var xmlParser = new XmlParser(responseXml);
+                        var xhtml = xmlParser.ParseHTML("/response/str");
+                        var htmlParser = new HtmlParser(WebUtility.HtmlDecode(xhtml));
+
+                        //doc.mimetype = xmlParser.ParseString("/response/lst/arr[@name='Content-Type']/str");
+                        //var pubdate = xmlParser.ParseDate("/response/lst/arr[@name='Creation-Date']/str");
+
+                        //if (pubdate != null)
+                        //   doc.timestamp = pubdate.Value;
+
+                        if (doc.content == null)
+                            doc.content = new List<string>();
+
+                        doc.content.Add(WebUtility.HtmlEncode(htmlParser.ParseStripInnerHtml("//body")));
                     }
                 }
                 catch(Exception ex)
                 {
-                    LogWarning(string.Format("Extraction failed for ID: {0} NAME:{1}. {2}", asset.SearchId, asset.Name, ex.Message));
+                    LogWarning(string.Format("Extraction failed for ID: {0} NAME:{1}. {2}", parameters.ContentItem._ContentID, parameters.ContentItem.Name, ex.Message));
                         
                     if(results != null)
                         results.WarningCnt++;
@@ -247,7 +278,7 @@ namespace MissionSearch.Indexers
             var indexedAssets = SearchClient.Search("sourceid:" + SourceId).Results;
 
             var notFound = indexedAssets
-                                .Where(p => !assets.Any(pg => pg.SearchId == p.id))
+                                .Where(p => !assets.Any(pg => pg._ContentID == p.id))
                                 .ToList();
 
             foreach (var page in notFound)
@@ -255,7 +286,7 @@ namespace MissionSearch.Indexers
                 SearchClient.Delete("id:" + page.id);
             }
 
-            SearchClient.PostCommit();
+            SearchClient.Commit();
 
             return notFound.Count();
         }

@@ -136,6 +136,8 @@
     <Compile Include="Attributes\DisplayName.cs" />
     <Compile Include="Attributes\FacetField.cs" />
     <Compile Include="Attributes\FilterField.cs" />
+    <Compile Include="Attributes\MapAttribute.cs" />
+    <Compile Include="Attributes\MapHtmlNode.cs" />
     <Compile Include="Attributes\RangeFacetField.cs" />
     <Compile Include="Attributes\SearchIndex.cs" />
     <Compile Include="Attributes\SortField.cs" />
@@ -144,11 +146,18 @@
     <Compile Include="Clients\Nutch\NutchJob.cs" />
     <Compile Include="Crawlers\CrawlerResults.cs" />
     <Compile Include="Crawlers\IWebCrawler.cs" />
+    <Compile Include="Crawlers\IWebCrawlPage.cs" />
+    <Compile Include="Crawlers\PageExtractRequest.cs" />
+    <Compile Include="Crawlers\PageExtractResults.cs" />
+    <Compile Include="Crawlers\PageScrapper.cs" />
+    <Compile Include="Crawlers\WebCrawlBasePage.cs" />
     <Compile Include="Crawlers\WebCrawler.cs" />
-    <Compile Include="Crawlers\WebCrawlPage.cs" />
     <Compile Include="Crawlers\WebCrawlJob.cs" />
+    <Compile Include="Indexers\ContentCrawlParameters.cs" />
     <Compile Include="Indexers\ContentIndexRequest.cs" />
-    <Compile Include="Indexers\CrawlerContentSetttings.cs" />
+    <Compile Include="Logger\ILogger.cs" />
+    <Compile Include="Logger\MissionLogger.cs" />
+    <Compile Include="Search\Facets\CategoryFacet.cs" />
     <Compile Include="Search\ICMSDocument.cs" />
     <Compile Include="Indexers\IndexerBase.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
@@ -156,7 +165,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Search\ISearchable.cs" />
     <Compile Include="Search\Query\DateFilterQuery.cs" />
     <Compile Include="Search\Query\DismaxQueryParm.cs" />
     <Compile Include="Search\Query\QueryParm.cs" />
@@ -200,11 +208,9 @@
     <Compile Include="Settings.cs" />
     <Compile Include="Util\HttpClient.cs" />
     <Compile Include="Util\HttpClientRequest.cs" />
-    <Compile Include="Util\ILogger.cs" />
-    <Compile Include="Util\MissionLogger.cs" />
-    <Compile Include="Util\PageScrapper.cs" />
-    <Compile Include="Util\PageScrapperResults.cs" />
-    <Compile Include="Util\SearchUtil.cs" />
+    <Compile Include="Util\JsonUtil.cs" />
+    <Compile Include="Util\MimeType.cs" />
+    <Compile Include="Util\ReflectionUtil.cs" />
     <Compile Include="Util\StringEncoder.cs" />
     <Compile Include="Util\HtmlParser.cs" />
     <Compile Include="Util\TypeParser.cs" />
@@ -212,7 +218,6 @@
     <Compile Include="Util\XmlParser.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

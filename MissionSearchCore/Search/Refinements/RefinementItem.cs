@@ -11,7 +11,9 @@ namespace MissionSearch
         
         public string Value { get; set; }
         
-        public string Label { get; set; }
+        public string DisplayName { get; set; }
+
+        public string GroupLabel { get; set; }
         
         public long Count { get; set; }
         
@@ -25,20 +27,23 @@ namespace MissionSearch
         {
         }
 
+        /*
         public RefinementItem(string name, string value)
         {
             Name = name;
             Value = value;
         }
+         * */
 
         public RefinementItem(string  value)
         {
             var values = value.Split(';');
 
-            if(values.Count() == 2)
+            if(values.Count() == 3)
             {
                 Name = values[0];
                 Value = values[1];
+                GroupLabel = values[2];
             }
         }
     }

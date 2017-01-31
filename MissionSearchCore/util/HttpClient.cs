@@ -14,9 +14,12 @@ namespace MissionSearch.Util
         {
             var request = (HttpWebRequest)WebRequest.Create(requestSettings.EndPoint);
 
-            request.Method = requestSettings.Method;
+            request.Method = requestSettings.Method ?? "Get";
             request.Referer = requestSettings.Referrer;
-            request.Timeout = requestSettings.Timeout;
+            
+            if(requestSettings.Timeout > 0)
+                request.Timeout = requestSettings.Timeout;
+
             //request.Host = = requestSettings.Host;
             
             var resp = (HttpWebResponse)request.GetResponse();

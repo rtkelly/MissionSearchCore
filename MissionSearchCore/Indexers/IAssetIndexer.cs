@@ -8,9 +8,14 @@ namespace MissionSearch.Indexers
 {
     public interface IAssetIndexer<T> where T : ISearchDocument 
     {
-        IndexResults RunFullIndex(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
-        IndexResults RunUpdate(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        //IndexResults RunFullIndex(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        //IndexResults RunUpdate(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+
+        IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        
         T Update(ISearchableAsset asset);
+        T Update(ContentCrawlParameters asset);
         
         int Delete(IEnumerable<ISearchableAsset> assets);
         void Delete(ISearchableAsset asset);

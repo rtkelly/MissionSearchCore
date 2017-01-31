@@ -40,6 +40,22 @@ namespace MissionSearch.Indexers
 
             switch (docProp.PropertyType.Name)
             {
+                case "String[]":
+                    {
+                        var array = docProp.GetValue(doc) as String[];
+                        
+                        var list = (array == null) ? new List<string>() : array.ToList();
+
+                        var valueArray = value as String[];
+
+                        foreach (var str in valueArray)
+                        {
+                            list.Add(str);
+                        }
+
+                        docProp.SetValue(doc, list.ToArray());
+                    }
+                    break;
                 case "List`1":
 
                     if (value.GetType().Name == docProp.PropertyType.Name)
@@ -99,7 +115,7 @@ namespace MissionSearch.Indexers
         /// <param name="docProps"></param>
         /// <param name="baseType"></param>
         /// <returns></returns>
-        protected T GetBaseProperties(ISearchableContent page, T doc, PropertyInfo[] docProps, System.Type baseType)
+        protected T GetBaseProperties(ISearchableContent page, T doc, PropertyInfo[] docProps, Type baseType)
         {
             var pageProps = baseType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
 
@@ -108,10 +124,13 @@ namespace MissionSearch.Indexers
             {
                 var customAttr = Attribute.GetCustomAttributes(pageProp, typeof(SearchIndex));
 
-                if (customAttr == null || !customAttr.Any())
+                if (!customAttr.Any())
                     continue;
 
                 var srchFieldMap = customAttr.First() as SearchIndex;
+
+                if (srchFieldMap == null) 
+                    continue;
 
                 var fieldName = srchFieldMap.FieldName;
 

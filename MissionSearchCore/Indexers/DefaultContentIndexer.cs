@@ -3,9 +3,6 @@ using MissionSearch.Util;
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using MissionSearch.Attributes;
-using System.Web;
-using System.Reflection;
 
 namespace MissionSearch.Indexers
 {
@@ -13,12 +10,13 @@ namespace MissionSearch.Indexers
     {
         public ISearchClient<T> SearchClient { get; set; }
 
-        int SourceId; 
+        int SourceId;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="srchClient"></param>
+        /// <param name="sourceId"></param>
         public DefaultContentIndexer(ISearchClient<T> srchClient, int sourceId)
         {
             if (srchClient == null)
@@ -27,9 +25,15 @@ namespace MissionSearch.Indexers
             SearchClient = srchClient;
             SourceId = sourceId; 
 
-            _logger = SearchFactory<T>.Logger;
+            _logger = SearchFactory.Logger;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="srchClient"></param>
+        /// <param name="sourceId"></param>
+        /// <param name="logger"></param>
         public DefaultContentIndexer(ISearchClient<T> srchClient, int sourceId, ILogger logger)
         {
             if (srchClient == null)
@@ -41,27 +45,36 @@ namespace MissionSearch.Indexers
             _logger = logger;
         }
 
-        public IndexResults RunFullIndex(IEnumerable<ISearchableContent> pages)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public IndexResults RunFullIndex(IEnumerable<ISearchableContent> content)
         {
-            var results = RunUpdate(pages, null, null);
+            return RunFullIndex(content, null, null);
+        }
 
-            results.DeleteCnt = PurgeDeletedDocuments(pages);
-
-            return results;
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> content)
+        {
+            return RunFullIndex(content, null, null);
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="pages"></param>
+        /// <param name="content"></param>
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
         /// <returns></returns>
-        public IndexResults RunFullIndex(IEnumerable<ISearchableContent> pages, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> content, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var results = RunUpdate(pages, statusCallback, indexerCallback);
+            var contentList = content as IList<ContentCrawlParameters> ?? content.ToList();
+            var contentItems = contentList.Select(c => c.ContentItem).ToList();
 
-            results.DeleteCnt = PurgeDeletedDocuments(pages);
+            var results = RunUpdate(contentList, statusCallback, indexerCallback);
+
+            results.DeleteCnt = PurgeDeletedDocuments(contentItems);
 
             return results;
         }
@@ -69,35 +82,65 @@ namespace MissionSearch.Indexers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="pages"></param>
+        /// <param name="content"></param>
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
-        public IndexResults RunUpdate(IEnumerable<ISearchableContent> pages, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        /// <returns></returns>
+        public IndexResults RunFullIndex(IEnumerable<ISearchableContent> content, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var results = new IndexResults();
+            var contentList = content as IList<ISearchableContent> ?? content.ToList();
+            var contentParamters = contentList.Select(c => new ContentCrawlParameters() { ContentItem = c }).ToList();
+            
+            var results = RunUpdate(contentParamters, statusCallback, indexerCallback);
 
-            results.TotalCnt = 0;
-            results.ErrorCnt = 0;
+            results.DeleteCnt = PurgeDeletedDocuments(contentList);
 
+            return results;
+        }
+
+       
+        public IndexResults RunUpdate(IEnumerable<ISearchableContent> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        {
+            var parameters = contentItems.Select(c => new ContentCrawlParameters() { ContentItem = c });
+
+            return RunUpdate(parameters, statusCallback, indexerCallback);
+        }
+       
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="contentItems"></param>
+        /// <param name="statusCallback"></param>
+        /// <param name="indexerCallback"></param>
+        public IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        {
+            var results = new IndexResults
+            {
+                TotalCnt = 0,
+                ErrorCnt = 0
+            };
+            
             int cnt = 0;
+            
+            if (contentItems == null)
+                return results;
 
-            //SearchClient.Reload();
-
-            foreach(var page in pages)
+            foreach(var parameters in contentItems)
             {
                 try
                 {
-                    if (page.NotSearchable)
+                    if (parameters.ContentItem.NotSearchable)
                     {
-                        if(SearchClient.Search("id:" + page.SearchId).Results.Any())
+                        if(SearchClient.Search("id:" + parameters.ContentItem._ContentID + " AND sourceid:" + SourceId.ToString()).Results.Any())
                         {
-                            SearchClient.Delete("id:" + page.SearchId);
+                            SearchClient.Delete("id:" + parameters.ContentItem._ContentID);
                             results.DeleteCnt++;
                         }
                         continue;
                     }
-                    
-                    var doc = CreateSearchDoc(page);
+                   
+                    var doc = CreateSearchDoc(parameters);
 
                     if (doc == null)
                         throw new Exception("error creating solr document");
@@ -106,7 +149,7 @@ namespace MissionSearch.Indexers
 
                     if (indexerCallback != null)
                     {
-                        doc = indexerCallback(doc, page);
+                        doc = indexerCallback(doc, parameters.ContentItem);
                     }
 
                     SearchClient.Post(doc);
@@ -119,23 +162,22 @@ namespace MissionSearch.Indexers
                             return results;
                         }
                     }
-                                        
-                    if (++cnt == 1000)
-                    {
-                        SearchClient.PostCommit();
-                        cnt = 0;
-                        //System.Threading.Thread.Sleep(5000);
 
-                    }
+                    if (++cnt != 1000) 
+                        continue;
+
+                    SearchClient.Commit();
+                    cnt = 0;
+                    //System.Threading.Thread.Sleep(5000);
                 }
                 catch(Exception ex)
                 {
-                    LogError(string.Format("Indexing failed for \"{0}\". {1} {2}", page.Name, ex.Message, ex.StackTrace));
+                    LogError(string.Format("Indexing failed for \"{0}\". {1} {2}", parameters.ContentItem.Name, ex.Message, ex.StackTrace));
                     results.ErrorCnt++;
                 }
             }
 
-            SearchClient.PostCommit();
+            SearchClient.Commit();
             SearchClient.Close();
 
             return results;
@@ -145,13 +187,13 @@ namespace MissionSearch.Indexers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="pages"></param>
-        private int PurgeDeletedDocuments(IEnumerable<ISearchableContent> pages)
+        /// <param name="contentItems"></param>
+        private int PurgeDeletedDocuments(IEnumerable<ISearchableContent> contentItems)
         {
-            var indexedPages = SearchClient.SearchAll("sourceid:" + SourceId);
+            var indexedPages = SearchClient.GetAll("sourceid:" + SourceId);
             
             var notFound = indexedPages
-                                .Where(p => !pages.Any(pg => pg.SearchId == p.id))
+                                .Where(p => contentItems.All(pg => pg._ContentID != p.id))
                                 .ToList();
 
             foreach(var page in notFound)
@@ -159,119 +201,120 @@ namespace MissionSearch.Indexers
                 SearchClient.DeleteById(page.id);
             }
 
-            SearchClient.PostCommit();
+            SearchClient.Commit();
 
-            return notFound.Count();
+            return notFound.Count;
         }
 
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="page"></param>
+        /// <param name="contentItem"></param>
         /// <returns></returns>
-        public T Update(ISearchableContent page)
+        public T Update(ContentCrawlParameters contentItem)
         {
-            var doc = CreateSearchDoc(page);
+            var doc = CreateSearchDoc(contentItem);
 
-            if (page.NotSearchable)
+            if (contentItem.ContentItem.NotSearchable)
             {
                 SearchClient.DeleteById(doc.id);
             }
-            else
+           else
             {
                 SearchClient.Post(doc);
             }
 
-            SearchClient.PostCommit();
+            SearchClient.Commit();
             SearchClient.Close();
 
             return doc;
         }
 
+        public T Update(ISearchableContent contentItem)
+        {
+            return Update(new ContentCrawlParameters() { 
+                ContentItem = contentItem 
+            });
+        }
+
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="pages"></param>
+        /// <param name="contentItems"></param>
         /// <returns></returns>
-        public int Delete(IEnumerable<ISearchableContent> pages)
+        public int Delete(IEnumerable<ISearchableContent> contentItems)
         {
-            foreach(var page in pages)
+            var items = contentItems as IList<ISearchableContent> ?? contentItems.ToList();
+
+            foreach(var page in items.ToList())
             {
-                SearchClient.DeleteById(page.SearchId);
+                SearchClient.DeleteById(page._ContentID);
             }
 
-            return pages.Count();
+            return items.Count;
         }
 
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="page"></param>
+        /// <param name="contentItem"></param>
         /// <returns></returns>
-        public void Delete(ISearchableContent page)
+        public void Delete(ISearchableContent contentItem)
         {
-            SearchClient.DeleteById(page.SearchId);
+            SearchClient.DeleteById(contentItem._ContentID);
         }
 
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="page"></param>
+        /// <param name="contentItem"></param>
         /// <returns></returns>
-        private T CreateSearchDoc(ISearchableContent page)
+        private T CreateSearchDoc(ContentCrawlParameters contentItem)
         {
+            if (contentItem == null)
+                return default(T);
+
             var doc = (T)Activator.CreateInstance(typeof(T), new object[] { });
-            
-            doc.sourceid = SourceId; 
-            doc.id = page.SearchId;
-            doc.url = page.SearchUrl;
-            doc.title = page.Name;
-            doc.timestamp = page.Changed;
 
-            var pageProps = page.GetType().GetProperties();
+            doc.sourceid = SourceId;
+
             var docProps = doc.GetType().GetProperties();
 
-            var pageCrawlProps = page.CrawlProperties as CrawlerContentSettings;
-
-            if (pageCrawlProps != null && pageCrawlProps.Content != null && pageCrawlProps.Content.Any())
+            if (contentItem.ContentItem != null)
             {
-                foreach(var crawlPropContent in pageCrawlProps.Content)
+                doc.id = contentItem.ContentItem._ContentID;
+                //doc.title = contentItem.ContentItem.Name;
+                
+                var contentBaseTypes = ReflectionUtil.GetBaseTypes(contentItem.ContentItem);
+
+                //contentBaseTypes.Add(contentItem.GetType());
+
+                foreach (var bType in contentBaseTypes)
+                {
+                    GetBaseProperties(contentItem.ContentItem, doc, docProps, bType);
+                }
+            }
+            
+            //var contentCrawlProps = contentItem.CrawlProperties as ContentCrawlParameters;
+
+            if (contentItem.Content != null && contentItem.Content.Any())
+            {
+                foreach (var crawlPropContent in contentItem.Content)
                 {
                     var docProp = docProps.FirstOrDefault(p => p.Name == crawlPropContent.Name);
 
-                    if(docProp != null)
+                    if (docProp != null)
                     {
                         SetPropertyValue(doc, docProp, crawlPropContent.Value);
                     }
                 }
             }
 
-            var pageBaseTypes = new List<System.Type>();
-
-            pageBaseTypes.Add(page.GetType());
-            
-            var baseType = page.GetType().BaseType;
-
-            while (baseType != null)
-            {
-                pageBaseTypes.Add(baseType);
-                baseType = baseType.BaseType;
-            }
-
-            pageBaseTypes.Reverse();
-
-            foreach (var bType in pageBaseTypes)
-            {
-                GetBaseProperties(page, doc, docProps, bType);
-            }
-
             var docContent = doc.content != null ? HtmlParser.StripHTML(string.Join(" ", doc.content)) : "";
-
             doc.highlightsummary = (HtmlParser.StripHTML(doc.summary) + " " + docContent + " " + doc.title).Trim();
-            
             
             return doc;
         }

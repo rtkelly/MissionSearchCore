@@ -2,6 +2,15 @@
 
 namespace MissionSearch.Clients
 {
+
+    internal class SolrResponseContainer
+    {
+        public SolrResponseHeader responseHeader { get; set; }
+        public SolrResponse response { get; set; }
+        public SolrFacetCounts facet_counts { get; set; }
+        public Dictionary<string, Dictionary<string, List<string>>> highlighting { get; set; }
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -33,6 +42,17 @@ namespace MissionSearch.Clients
         public int numFound { get; set; }
         public int start { get; set; }
         public List<T> docs { get; set; }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    internal class SolrResponse
+    {
+        public int numFound { get; set; }
+        public int start { get; set; }
+        public List<dynamic> docs { get; set; }
     }
 
     /// <summary>

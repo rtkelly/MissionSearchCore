@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MissionSearch.Search.Query;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Web;
 
 namespace MissionSearch.Clients
 {
-    internal class SolrQueryBuilder
+    internal class SolrQueryBuilder 
     {
         
         /// <summary>
@@ -16,19 +17,58 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
+        public static string BuildSearchQuery<T>(SearchRequest request) where T : ISearchDocument 
+        {
+            var solrQueryString = new StringBuilder();
+
+            solrQueryString.Append(string.Format("?q={0}&wt=json", request.QueryText));
+            solrQueryString.Append(AppendFields<T>(request));
+            solrQueryString.Append(AppendSort(request));
+            solrQueryString.Append(AppendFacets(request));
+            solrQueryString.Append(AppendHighlighting(request));
+            solrQueryString.Append(AppendQueryOptions(request.QueryOptions));
+            solrQueryString.Append(AppendRefinementFilters(request));
+            
+            solrQueryString.Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start));
+                        
+            return solrQueryString.ToString();
+        }
+
         public static string BuildSearchQuery(SearchRequest request)
         {
             var solrQueryString = new StringBuilder();
 
             solrQueryString.Append(string.Format("?q={0}&wt=json", request.QueryText));
+            //solrQueryString.Append(AppendFields(request));
             solrQueryString.Append(AppendSort(request));
             solrQueryString.Append(AppendFacets(request));
             solrQueryString.Append(AppendHighlighting(request));
-            solrQueryString.Append(AppendQueryOptions(request));
+            solrQueryString.Append(AppendQueryOptions(request.QueryOptions));
+            solrQueryString.Append(AppendRefinementFilters(request));
+
             solrQueryString.Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start));
-            
-            //solrQueryString.Append(AppendLanguage(request));
+
             return solrQueryString.ToString();
+        }
+
+
+        private static string AppendFields<T>(SearchRequest request) where T : ISearchDocument 
+        {
+            var docProps = typeof(T).GetProperties();
+
+            var props = new List<string>();
+
+            foreach(var prop in docProps)
+            {
+                if (prop.Name == "highlightsummary" && request.EnableHighlighting == false)
+                    continue;
+
+                props.Add(prop.Name);
+            }
+            
+            var str = string.Format("&fl={0}", string.Join(",", props));
+
+            return str;
         }
 
         /// <summary>
@@ -62,89 +102,109 @@ namespace MissionSearch.Clients
             return (request.EnableHighlighting) ? "&hl.fl=highlightsummary&hl=on" : "";
         }
 
+        private static string AppendRefinementFilters(SearchRequest request)
+        {
+            var queryOptions = QueryOptions.ParseRefinementString(request.Refinements);
+
+            var str = new StringBuilder();
+
+            if (queryOptions == null || !queryOptions.Any())
+                return "";
+
+            var filterEqualQueries = queryOptions
+                            .OfType<FilterQuery>()
+                            .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Equals)
+                            .Select(qp => string.Format("&fq={0}:{1}", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
+
+            if (filterEqualQueries.Any())
+                str.Append(string.Join("", filterEqualQueries));
+
+            return str.ToString();
+
+        }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        private static string AppendQueryOptions(SearchRequest request)
+        private static string AppendQueryOptions(List<IQueryOption> queryOptions)
         {
-            var queryOptions = new StringBuilder();
+            var str = new StringBuilder();
 
-            if (request.QueryOptions == null || !request.QueryOptions.Any())
+            if (queryOptions == null || !queryOptions.Any())
                 return "";
                         
-            var filterEqualQueries = request.QueryOptions
+            var filterEqualQueries = queryOptions
                              .OfType<FilterQuery>()
                              .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Equals)
                              .Select(qp => string.Format("&fq={0}:{1}", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
             
-            var filterGreaterQueries = request.QueryOptions
+            var filterGreaterQueries = queryOptions
                              .OfType<DateFilterQuery>()
                              .Where(fq => fq.Condition == DateFilterQuery.ConditionalTypes.GreaterThenEqual)
                              .Select(qp => string.Format("&fq={0}:[{1} TO *]", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
             
-            var filterLessQueries = request.QueryOptions
+            var filterLessQueries = queryOptions
                            .OfType<DateFilterQuery>()
                            .Where(fq => fq.Condition == DateFilterQuery.ConditionalTypes.LessThenEqual)
                            .Select(qp => string.Format("&fq={0}:[* TO {1}]", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
             
-            var filterWildcardQueries = request.QueryOptions
+            var filterWildcardQueries = queryOptions
                            .OfType<FilterQuery>()
                            .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Contains)
                            .Select(qp => string.Format("&fq={0}:{1}", qp.ParameterName, FormatWildCard(qp.FieldValue))).ToList();
             
-            var filterNotQueries = request.QueryOptions
+            var filterNotQueries = queryOptions
                            .OfType<FilterQuery>()
                            .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.NotEqual)
                            .Select(qp => string.Format("&fq=-{0}:{1}", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
 
-            var disMaxQueryParms = request.QueryOptions
+            var disMaxQueryParms = queryOptions
                            .OfType<DisMaxQueryParm>()
                            .Select(qp => ProcessQueryOption(qp.ParameterName, qp.ParameterValue)).ToList();
 
-            var queryParms = request.QueryOptions
+            var queryParms = queryOptions
                            .OfType<QueryParm>()
                            .Select(qp => ProcessQueryOption(qp.ParameterName, qp.ParameterValue)).ToList();
 
             if (queryParms.Any())
             {
-                queryOptions.Append(string.Join("", queryParms));
+                str.Append(string.Join("", queryParms));
             }
 
             if (disMaxQueryParms.Any())
             {
-                queryOptions.Append(string.Join("", disMaxQueryParms));
+                str.Append(string.Join("", disMaxQueryParms));
             }
 
             if (filterEqualQueries.Any())
-                queryOptions.Append(string.Join("", filterEqualQueries));
+                str.Append(string.Join("", filterEqualQueries));
 
             if (filterGreaterQueries.Any())
-                queryOptions.Append(string.Join("", filterGreaterQueries));
+                str.Append(string.Join("", filterGreaterQueries));
 
             if (filterLessQueries.Any())
-                queryOptions.Append(string.Join("", filterLessQueries));
+                str.Append(string.Join("", filterLessQueries));
 
             if (filterWildcardQueries.Any())
-                queryOptions.Append(string.Join("", filterWildcardQueries));
+                str.Append(string.Join("", filterWildcardQueries));
 
             if (filterNotQueries.Any())
-                queryOptions.Append(string.Join("", filterNotQueries));
+                str.Append(string.Join("", filterNotQueries));
                         
-            var boostQueries = request.QueryOptions
+            var boostQueries = queryOptions
                                .OfType<BoostQuery>()
                                .Select(qp => string.Format("&bq={0}:{1}^{2}", qp.ParameterName, qp.FieldValue, qp.Boost)).ToList();
 
             if (boostQueries.Any())
-                queryOptions.Append(string.Join("", boostQueries));
+                str.Append(string.Join("", boostQueries));
 
             if(boostQueries.Any() || disMaxQueryParms.Any())
             {
-                queryOptions.Append("&defType=dismax");
+                str.Append("&defType=dismax");
             }
 
-            return queryOptions.ToString();
+            return str.ToString();
         }
 
         /// <summary>
@@ -283,6 +343,13 @@ namespace MissionSearch.Clients
                 //facets.Add(string.Format("&json.facet={{categories: {{ type : terms, field : {0}, facet : {{ x : \"hll({0})\" }} }}}}", facet.FieldName)); 
             }
 
+            var categoryFacets = request.Facets.OfType<CategoryFacet>().ToList();
+
+            foreach (var facet in categoryFacets)
+            {
+                facets.Add(string.Format("&facet.field={0}", facet.FieldName));
+            }
+
             var rangeFacets = request.Facets.OfType<NumRangeFacet>();
 
             foreach (var facet in rangeFacets)
@@ -316,15 +383,15 @@ namespace MissionSearch.Clients
             
             if (facets.Any())
             {
-                if (request.RefinementType == RefinementTypes.Refinement)
-                {
-                    facets.Add("&facet=on&facet.mincount=1");
+                //if (request.RefinementType == RefinementType.Refinement)
+                //{
+                  //  facets.Add("&facet=on&facet.mincount=1");
                     
-                }
-                else
-                {
+                //}
+                //else
+                //{
                     facets.Add("&facet=on&facet.mincount=0");
-                }
+                //}
             }
 
             return string.Join("", facets);

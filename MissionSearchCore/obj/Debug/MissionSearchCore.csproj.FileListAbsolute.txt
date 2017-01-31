@@ -1,7 +1,3 @@
-C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\MissionSearch.dll.config
-C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\MissionSearch.dll
-C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\MissionSearch.pdb
-C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Microsoft.Web.Infrastructure.dll
 C:\iisweb\MissionSearch\MissionSearchCore\obj\Debug\MissionSearch.dll
 C:\iisweb\MissionSearch\MissionSearchCore\obj\Debug\MissionSearch.pdb
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Antlr3.Runtime.dll
@@ -20,6 +16,7 @@ C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.Contrib.SimpleFac
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.Contrib.Snowball.dll
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.Contrib.SpellChecker.dll
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.dll
+C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Microsoft.Web.Infrastructure.dll
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Newtonsoft.Json.dll
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\NLog.dll
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\System.Web.Optimization.dll
@@ -54,3 +51,5 @@ C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.Contrib.SpellChec
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Newtonsoft.Json.xml
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\NLog.xml
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\System.Web.Optimization.xml
+C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\MissionSearch.dll
+C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\MissionSearch.pdb

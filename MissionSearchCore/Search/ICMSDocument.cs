@@ -13,15 +13,19 @@ namespace MissionSearch
         string mimetype { get; set; }
 
         string hostname { get; set; }
-        
-        List<string> paths { get; set; }
 
         string path { get; set; }
 
+        List<string> paths { get; set; }
+        
         List<string> categories { get; set; }
-
+                
         string folder { get; set; }
 
         List<string> language { get; set; }
+
+        string pagetype { get; set; }
+
+        
     }
 }

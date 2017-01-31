@@ -1,24 +1,24 @@
 ﻿using HtmlAgilityPack;
-using MissionSearch.Clients;
 using MissionSearch.Indexers;
 using MissionSearch.Util;
-using NLog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MissionSearch.Crawlers
 {
-    public class WebCrawler<T> : IWebCrawler where T : ISearchDocument
+    public class WebCrawler<C, T> : IWebCrawler
+        where T : ISearchDocument
+        where C : IWebCrawlPage
     {
-        public WebCrawlJob CrawlSettings { get; set; }
+        public WebCrawlJob _crawlSettings { get; set; }
 
-        MissionSearch.Util.ILogger _logger { get; set; }
+        private IContentIndexer<T> _Indexer;
+        
+        private Util.ILogger _logger { get; set; }
 
         private List<string> LinksProcessed { get; set; }
+        
         private List<string> LinksToIndex { get; set; }
 
         private PageScrapper _pageScrapper { get; set; }
@@ -31,14 +31,21 @@ namespace MissionSearch.Crawlers
 
         public WebCrawler(WebCrawlJob crawlSettings, Global<T>.StatusCallBack statusCallback=null)
         {
-            CrawlSettings = crawlSettings;
-
-            _logger = crawlSettings.Logger;
-
+            _crawlSettings = crawlSettings;
+            _logger = SearchFactory.Logger;
+            _Indexer = SearchFactory<T>.ContentIndexer;
             _pageScrapper = new PageScrapper();
-
             _statusCallback = statusCallback;
-            
+        }
+
+        public WebCrawler(WebCrawlJob crawlSettings, IContentIndexer<T> indexer, Global<T>.StatusCallBack statusCallback = null)
+        {
+            _crawlSettings = crawlSettings;
+            _logger = SearchFactory.Logger;
+            _Indexer = indexer;
+            _pageScrapper = new PageScrapper();
+            _statusCallback = statusCallback;
+
         }
                 
         /// <summary>
@@ -65,20 +72,21 @@ namespace MissionSearch.Crawlers
         /// <returns></returns>
         public CrawlerResults Run()
         {
-            var results = new CrawlerResults();
-
-            results.SourceId = CrawlSettings.SourceId;
+            var results = new CrawlerResults
+            {
+                SourceId = _crawlSettings.SourceId
+            };
             
             var startTime = DateTime.Now;
 
             LoggerInfo("Starting Web Crawl");
 
-            BaseUrl = UrlParser.GetHostName(CrawlSettings.SeedUrl);
-            BaseSchema = UrlParser.GetSchema(CrawlSettings.SeedUrl);
+            BaseUrl = UrlParser.GetHostName(_crawlSettings.SeedUrl);
+            BaseSchema = UrlParser.GetSchema(_crawlSettings.SeedUrl);
                         
-            var seedPageResp =  HttpClient.GetRequest(CrawlSettings.SeedUrl);
+            var seedPageResp =  HttpClient.GetRequest(_crawlSettings.SeedUrl);
 
-            LoggerInfo(string.Format("Crawling {0}", CrawlSettings.SeedUrl));
+            LoggerInfo(string.Format("Crawling {0}", _crawlSettings.SeedUrl));
 
             LinksProcessed = new List<string>();
             LinksToIndex = new List<string>();
@@ -88,7 +96,7 @@ namespace MissionSearch.Crawlers
             
             ProcessLinks(links, depth);
 
-            var searchableContent = new List<WebCrawlPage>();
+            var searchableContent = new List<IWebCrawlPage>();
                         
             foreach(var link in LinksToIndex)
             {
@@ -106,12 +114,9 @@ namespace MissionSearch.Crawlers
             }
 
             LoggerInfo("Running Indexer");
-
-            var client = new SolrClient<T>(CrawlSettings.SearchConnectionString);
-
-            var indexer = new DefaultContentIndexer<T>(client, CrawlSettings.SourceId, _logger);
                         
-            var indexResults = indexer.RunUpdate(searchableContent, null, null);
+                        
+            var indexResults = _Indexer.RunUpdate(searchableContent, null, null);
 
             results.TotalCnt = indexResults.TotalCnt;
             results.ErrorCnt = indexResults.ErrorCnt;
@@ -123,12 +128,14 @@ namespace MissionSearch.Crawlers
         }
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="link"></param>
+       /// <summary>
+       /// 
+       /// </summary>
+       /// <param name="links"></param>
+       /// <param name="depth"></param>
         private void ProcessLinks(List<string> links, int depth)
         {
+            
             foreach(var link in links)
             {
                 ProcessLink(link, depth);
@@ -136,7 +143,6 @@ namespace MissionSearch.Crawlers
 
                 if (HandleStatusCallBack())
                     return;
-
             }
 
             
@@ -147,33 +153,34 @@ namespace MissionSearch.Crawlers
         /// </summary>
         /// <param name="link"></param>
         /// <returns></returns>
-        private WebCrawlPage ProcessPage(string link)
+        private C ProcessPage(string link)
         {
-            var results = _pageScrapper.ScrapPage2(link);
+            var searchable = (C)Activator.CreateInstance(typeof(C), new object[] { });
+
+            searchable._ContentID = UrlParser.GetHostandPath(link);
+            searchable.SearchUrl = link;
+            searchable.Hostname = BaseUrl;
+
+            var req = new PageExtractRequest()
+            {
+                PageUrl =  link,
+                PageModel = searchable,
+            };
+            
+            var results = _pageScrapper.ScrapPage(req);
 
             if (results == null)
-                return null;
-
-            var searchable = new WebCrawlPage()
-            {
-                Name = results.Title,
-                Content = results.Content,
-                Summary = results.Description,
-                SearchId = UrlParser.GetHostandPath(link),
-                SearchUrl = link,
-                Hostname = BaseUrl,
-                
-               
-                
-            };
-
+                return default(C);
+                        
             return searchable;
         }
 
+       
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="links"></param>
+        /// <param name="link"></param>
+        /// <param name="depth"></param>
         private void ProcessLink(string link, int depth)
         {
             try
@@ -187,7 +194,7 @@ namespace MissionSearch.Crawlers
                 {
                     var newDepth = depth + 1;
 
-                    if (newDepth > CrawlSettings.Depth)
+                    if (newDepth > _crawlSettings.Depth)
                         return;
 
                     LoggerDebug(string.Format("Crawling {0} depth {1}", link, depth));
@@ -217,7 +224,7 @@ namespace MissionSearch.Crawlers
         {
             var links = new List<string>();
 
-            var doc = new HtmlAgilityPack.HtmlDocument();
+            var doc = new HtmlDocument();
 
             try
             {
@@ -235,9 +242,9 @@ namespace MissionSearch.Crawlers
                     var linkUrl = (!href.StartsWith("http")) ?
                             string.Format("{0}://{1}{2}", BaseSchema, BaseUrl, href) : href;
                         
-                    if (CrawlSettings.LinkCleanupPattern != null)
+                    if (_crawlSettings.LinkCleanupPattern != null)
                     {
-                        foreach (var cleanupPattern in CrawlSettings.LinkCleanupPattern)
+                        foreach (var cleanupPattern in _crawlSettings.LinkCleanupPattern)
                         {
                             linkUrl = Regex.Replace(linkUrl, cleanupPattern, "");
                         }
@@ -267,9 +274,9 @@ namespace MissionSearch.Crawlers
         /// <returns></returns>
         private bool ContainsCrawlUrlPattern(string url)
         {
-            if (CrawlSettings.CrawlUrlPattern != null)
+            if (_crawlSettings.CrawlUrlPattern != null)
             {
-                foreach (var pattern in CrawlSettings.CrawlUrlPattern)
+                foreach (var pattern in _crawlSettings.CrawlUrlPattern)
                 {
                     if (Regex.IsMatch(url, pattern.Trim()))
                         return true;
@@ -286,9 +293,9 @@ namespace MissionSearch.Crawlers
         /// <returns></returns>
         private bool ContainsIndexUrlPattern(string url)
         {
-            if (CrawlSettings.IndexUrlPattern != null)
+            if (_crawlSettings.IndexUrlPattern != null)
             {
-                foreach (var pattern in CrawlSettings.IndexUrlPattern)
+                foreach (var pattern in _crawlSettings.IndexUrlPattern)
                 {
                     if (Regex.IsMatch(url, pattern.Trim()))
                         return true;
@@ -305,9 +312,9 @@ namespace MissionSearch.Crawlers
         /// <returns></returns>
         private bool ContainsIndexSkipPattern(string url)
         {
-            if (CrawlSettings.IndexSkipUrlPattern != null)
+            if (_crawlSettings.IndexSkipUrlPattern != null)
             {
-                foreach (var skipPattern in CrawlSettings.IndexSkipUrlPattern)
+                foreach (var skipPattern in _crawlSettings.IndexSkipUrlPattern)
                 {
                     if (Regex.IsMatch(url, skipPattern.Trim()))
                         return true;
@@ -324,9 +331,9 @@ namespace MissionSearch.Crawlers
         /// <returns></returns>
         private bool ContainsCrawlSkipPattern(string url)
         {
-            if (CrawlSettings.CrawlSkipUrlPattern != null)
+            if (_crawlSettings.CrawlSkipUrlPattern != null)
             {
-                foreach (var skipPattern in CrawlSettings.CrawlSkipUrlPattern)
+                foreach (var skipPattern in _crawlSettings.CrawlSkipUrlPattern)
                 {
                     if(Regex.IsMatch(url, skipPattern.Trim()))
                         return true;

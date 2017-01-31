@@ -178,7 +178,7 @@ namespace MissionSearch.Suggester
        /// </summary>
        public void CommitTerms()
        {
-           SrchClient.PostCommit();
+           SrchClient.Commit();
        }
 
 

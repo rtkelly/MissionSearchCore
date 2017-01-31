@@ -9,7 +9,16 @@ namespace MissionSearch.Search.Facets
     public interface IFacet
     {
         string FieldName { get; set; }
+        
         string FieldLabel { get; set; }
+        
         int Order { get; set; }
+
+        RefinementType RefinementOption { get; set; }
+
+        FacetSortOption Sort { get; set; }
+
+        //FacetSortOption Sort { get; set; }
+        
     }
 }

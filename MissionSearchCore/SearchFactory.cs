@@ -34,6 +34,15 @@ namespace MissionSearch
             }
         }
 
+        public static ILogger Logger
+        {
+            get
+            {
+                return ResolveComponent<ILogger>();
+            }
+        }
+
+
     }
 
     public class SearchFactory<T> where T : ISearchDocument
@@ -72,18 +81,7 @@ namespace MissionSearch
                 return ResolveComponent<ISearchClient<T>>();
             }
         }
-
-        public static ILogger Logger
-        {
-            get
-            {
-                return ResolveComponent<ILogger>();
-            }
-        }
-
         
-              
-
 
 
         /// <summary>

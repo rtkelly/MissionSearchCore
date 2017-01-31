@@ -5,7 +5,7 @@ using System.Web;
 
 namespace MissionSearch
 {
-    public enum RefinementTypes
+    public enum RefinementType
     {
         SingleSelect,
         MultiSelect,

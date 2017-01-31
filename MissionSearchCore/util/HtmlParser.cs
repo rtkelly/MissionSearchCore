@@ -88,6 +88,64 @@ namespace MissionSearch.Util
             var collection = _htmlDocument.DocumentNode.SelectNodes(xpath);
             return collection;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <param name="attributeName"></param>
+        /// <returns></returns>
+        public static string ParseAtrtributeFromNode(HtmlDocument doc, string xpath, string attributeName)
+        {
+            var nodes = doc.DocumentNode.SelectNodes(xpath);
+
+            foreach (var node in nodes)
+            {
+                string content = node.GetAttributeValue(attributeName, "");
+
+                if (!string.IsNullOrEmpty(content))
+                    return content;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
+        public static string ParseStringFromHtml(HtmlDocument doc, string xpath)
+        {
+            var value = doc.DocumentNode.SelectSingleNode(xpath).InnerText;
+
+            if (!string.IsNullOrEmpty(value))
+                return value;
+
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
+        public static DateTime? ParseDateFromHtml(HtmlDocument doc, string xpath)
+        {
+
+            var value = doc.DocumentNode.SelectSingleNode(xpath).InnerText;
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                return TypeParser.ParseDateTime(value);
+            }
+
+            return null;
+        }
+
       
 
     }

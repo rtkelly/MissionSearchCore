@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web.Hosting;
 
 namespace MissionSearch.Clients
 {
@@ -44,7 +45,14 @@ namespace MissionSearch.Clients
             if (string.IsNullOrEmpty(srchConnectionString))
                 throw new NotImplementedException("Solr Core undefined");
 
-            _srchConnStr = srchConnectionString;
+            if (srchConnectionString.StartsWith("/"))
+            {
+                _srchConnStr = HostingEnvironment.MapPath(srchConnectionString);
+            }
+            else
+            {
+                _srchConnStr = srchConnectionString;
+            }
             
         }
 
@@ -328,11 +336,12 @@ namespace MissionSearch.Clients
             
         }
 
-
+        /*
         public List<string> GetSynonyms()
         {
             throw new NotImplementedException();
         }
+         * */
 
 
         public void DeleteById(string id)
@@ -350,15 +359,6 @@ namespace MissionSearch.Clients
             throw new NotImplementedException();
         }
         
-      
-
-        T ISearchClient<T>.Extract(T doc, byte[] fileBytes)
-        {
-            throw new NotImplementedException();
-        }
-
-
-
 
 
         public void Reload()
@@ -373,7 +373,70 @@ namespace MissionSearch.Clients
         }
 
 
-        public List<T> SearchAll(string queryText)
+        public List<T> GetAll(string queryText)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public string Extract(byte[] fileBytes)
+        {
+            throw new NotImplementedException();
+        }
+        
+        SearchResponse<T> ISearchClient<T>.Search(string queryText)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<T> ISearchClient<T>.GetAll(string queryText)
+        {
+            throw new NotImplementedException();
+        }
+
+        string ISearchClient<T>.FileExtract(byte[] fileBytes)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.Post(T doc)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.DeleteById(string id)
+        {
+            throw new NotImplementedException();
+        }
+        
+        List<string> ISearchClient<T>.GetTerms(string fieldName, string term)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.Commit()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.Close()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.Reload()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public void Post(string jsonDoc)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        SearchResponse ISearchClient.Search(SearchRequest request)
         {
             throw new NotImplementedException();
         }

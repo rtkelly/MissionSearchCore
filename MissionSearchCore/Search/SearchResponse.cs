@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MissionSearch.Clients;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,23 +8,38 @@ using System.Web;
 
 namespace MissionSearch
 {
-    public class SearchResponse<T>
+    public class SearchResponse
+    {
+        public string QueryString { get; set; }
+
+        public string JsonResponse { get; set; }
+
+        internal SolrResponseContainer ResponseContainer { get; set; }
+
+        public List<dynamic> Results { get; set; }
+        
+        
+
+    }
+    public class SearchResponse<T> : SearchResponse
     {
         public List<T> Results { get; set; }
+        
         public List<Refinement> Refinements;
 
         public int PageSize { get; set; }
-        public int CurrentPage { get; set; }
-        public string time { get; set; }
-        public int TotalFound { get; set; }
-        public string SearchText { get; set; }
-        public string QueryString { get; set; }
-        public string JsonResponse { get; set; }
-        public string ErrorMessage { get; set; }
-        public bool Success { get; set; }
-        //public Dictionary<string, Dictionary<string, List<string>>> Highlighting { get; set; }
         
-        public int TotalPages
+        internal int CurrentPage { get; set; }
+                
+        public int TotalFound { get; set; }
+        
+        public string SearchText { get; set; }
+        
+        public string ErrorMessage { get; set; }
+        
+        public bool Success { get; set; }
+        
+        internal int TotalPages
         {
             get
             {
@@ -38,7 +55,7 @@ namespace MissionSearch
             }
         }
 
-        public int Start
+        private int Start
         {
             get
             {
@@ -46,11 +63,39 @@ namespace MissionSearch
             }
         }
 
-        public int End
+        private int End
         {
             get
             {
                 return (CurrentPage - 1) * PageSize + (PageSize-1);
+            }
+        }
+
+        private Pagination _pagingInfo { get; set; }
+
+        public Pagination PagingInfo
+        {
+            get
+            {
+                if (_pagingInfo == null)
+                {
+                   
+                    _pagingInfo = BuildPagination();
+                }
+
+                return _pagingInfo;
+            }
+        }
+
+
+        internal SolrResponseContainer<T> ResponseContianer
+        {
+            get
+            {
+                return  JsonConvert.DeserializeObject<SolrResponseContainer<T>>(JsonResponse, new JsonSerializerSettings()
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                });
             }
         }
 
@@ -67,6 +112,7 @@ namespace MissionSearch
         /// 
         /// </summary>
         /// <returns></returns>
+        /*
         public List<RefinementItem> GetSelectedRefinements()
         {
             var selected = new List<RefinementItem>();
@@ -82,6 +128,7 @@ namespace MissionSearch
 
             return selected;
         }
+         * */
 
 
         /// <summary>
@@ -91,33 +138,29 @@ namespace MissionSearch
         /// <param name="request"></param>
         /// <param name="postBackUrl"></param>
         /// <returns></returns>
-        public Pagination BuildPagination()
+        private Pagination BuildPagination()
         {
-            int totalPages = TotalPages;
-            
-            var currentPage = CurrentPage;
-            
             var pagination = new Pagination();
             pagination.Pages = new List<PaginationPage>();
-            pagination.TotalPages = totalPages;
-            pagination.CurrentPage = currentPage;
+            pagination.TotalPages = TotalPages;
+            pagination.CurrentPage = CurrentPage;
             pagination.StartRow = Start;
             pagination.EndRow = (End > TotalFound) ? TotalFound  : End;
             pagination.TotalRows = TotalFound;
                         
             int groupSize = 8;
 
-            if (totalPages <= 1) return pagination;
+            if (TotalPages <= 1) return pagination;
 
             int groupHalf = groupSize / 2;
 
-            int pageStart = (currentPage - groupHalf);
-            int pageEnd = (currentPage + groupHalf);
+            int pageStart = (CurrentPage - groupHalf);
+            int pageEnd = (CurrentPage + groupHalf);
 
-            if (pageEnd >= totalPages)
+            if (pageEnd >= TotalPages)
             {
-                pageStart = pageStart - (pageEnd - totalPages);
-                pageEnd = totalPages;
+                pageStart = pageStart - (pageEnd - TotalPages);
+                pageEnd = TotalPages;
             }
 
             if (pageStart < 1)
@@ -126,13 +169,13 @@ namespace MissionSearch
                 pageStart = 1;
             }
 
-            if (pageEnd >= totalPages)
+            if (pageEnd >= TotalPages)
             {
-                pageEnd = totalPages;
+                pageEnd = TotalPages;
             }
 
-            int prevPage = currentPage - 1;
-            int nextPage = (currentPage + 1) > totalPages ? totalPages : currentPage + 1;
+            int prevPage = CurrentPage - 1;
+            int nextPage = (CurrentPage + 1) > TotalPages ? TotalPages : CurrentPage + 1;
 
             if (prevPage < 1)
                 prevPage = 1;
@@ -140,11 +183,10 @@ namespace MissionSearch
             pagination.FirstPage = 1;
             pagination.LastPage = pageEnd;
             pagination.PrevPage = prevPage;
-            pagination.NextPage = (currentPage + 1) > totalPages ? pageEnd : currentPage + 1;
-
+            pagination.NextPage = (CurrentPage + 1) > TotalPages ? pageEnd : CurrentPage + 1;
 
             pagination.FirstPageLink = "&page=1";
-            pagination.LastPageLink = string.Format("&page={0}", totalPages);
+            pagination.LastPageLink = string.Format("&page={0}", TotalPages);
             pagination.PrevPageLink = string.Format("&page={0}", prevPage);
             pagination.NextPageLink = string.Format("&page={0}", nextPage);
 
@@ -154,14 +196,16 @@ namespace MissionSearch
                 {
                     Page = pageCnt,
                     Link = string.Format("&page={0}", pageCnt),
-                    Current = (currentPage == pageCnt),
+                    Current = (CurrentPage == pageCnt),
                 });
             }
-
-            
+                       
 
             return  pagination;
         }
+
+
+
 
     }
 }

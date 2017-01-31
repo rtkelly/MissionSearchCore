@@ -16,26 +16,24 @@ namespace MissionSearch
         /// </summary>
         /// <param name="refinements"></param>
         /// <returns></returns>
-        public static List<IQueryOption> ParseRefinementString(string refinements)
+        public static List<FilterQuery> ParseRefinementString(string refinements)
         {
-            var list = new List<IQueryOption>();
-
+            var list = new List<FilterQuery>();
            
-                if (string.IsNullOrEmpty(refinements))
-                    return list;
+            if (string.IsNullOrEmpty(refinements))
+                return list;
 
-                var decodedRefinements = StringEncoder.DecodeString(refinements);
+            var decodedRefinements = StringEncoder.DecodeString(refinements);
 
-                foreach (var r in decodedRefinements.Split(','))
+            foreach (var r in decodedRefinements.Split(','))
+            {
+                var fields = r.Split(';');
+
+                if (fields.Count() == 3)
                 {
-                    var fields = r.Split(';');
-
-                    if (fields.Count() == 2)
-                    {
-                        list.Add(new FilterQuery(fields[0], fields[1]));
-                    }
+                    list.Add(new FilterQuery(fields[0], fields[1]));
                 }
-            
+            }
 
             return list;
         }
