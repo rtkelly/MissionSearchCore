@@ -1,0 +1,94 @@
+﻿using HtmlAgilityPack;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Web;
+
+namespace MissionSearch.Util
+{
+    public class HtmlParser
+    {
+        HtmlDocument _htmlDocument;
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="html"></param>
+        public HtmlParser(string html)
+        {
+            _htmlDocument = new HtmlDocument();
+            _htmlDocument.LoadHtml(html);
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
+        public string ParseInnerHtml(string xpath)
+        {
+            var node = _htmlDocument.DocumentNode.SelectSingleNode(xpath);
+
+            return node == null ? "" : node.InnerHtml;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
+        public string ParseStripInnerHtml(string xpath)
+        {
+            var node = _htmlDocument.DocumentNode.SelectSingleNode(xpath);
+
+            return node == null ? "" : Tokenize(StripHTML(node.InnerHtml));
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string StripHTML(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+                    
+            return StripComments(StripFormating(Regex.Replace(input, "<.*?>", String.Empty)));
+        }
+
+        public static string StripComments(string input)
+        {
+            return input.Replace("<!--", "").Replace("-->", "").Trim();
+        }
+
+        public static string StripFormating(string input)
+        {
+            return Regex.Replace(input, "\n|\r|\t", " ").Trim();
+        }
+
+        public static string Tokenize(string input)
+        {
+           var tokens = input.Split(' ');
+
+           return string.Join(" ", tokens.Where(t => !string.IsNullOrEmpty(t)));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="xpath"></param>
+        /// <returns></returns>
+        public HtmlNodeCollection GetNodes(string xpath)
+        {
+            var collection = _htmlDocument.DocumentNode.SelectNodes(xpath);
+            return collection;
+        }
+      
+
+    }
+}

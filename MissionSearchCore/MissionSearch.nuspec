@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>Mission Search</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
+    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <copyright>Copyright 2016</copyright>
+    
+  </metadata>
+  <files>
+    <file src="..\EpiSearchBase\MissionSearch.config" target="\MissionSearch.config" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\*.*" target="\MissionSearchEpi" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\Config\*.*" target="\MissionSearchEpi\Config" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\jobs\*.*" target="\MissionSearchEpi\Jobs" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\jobs\Crawlers\*.*" target="\MissionSearchEpi\Jobs\Crawlers" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\Models\*.*" target="\MissionSearchEpi\Models" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\Models\Attributes\*.*" target="\MissionSearchEpi\Models\Attributes" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\*.*" target="\MissionSearchEpi\UI" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Blocks\*.*" target="\MissionSearchEpi\UI\Blocks" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Controllers\*.*" target="\MissionSearchEpi\UI\Controllers" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\EditorDescriptors\*.*" target="\MissionSearchEpi\UI\EditorDescriptors" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Events\*.*" target="\MissionSearchEpi\UI\Events" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Extensions\*.*" target="\MissionSearchEpi\UI\Extensions" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\ViewModels\*.*" target="\MissionSearchEpi\UI\ViewModels" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Views\*.*" target="\MissionSearchEpi\UI\Views" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Views\SearchAdmin\*.*" target="\MissionSearchEpi\UI\Views\SearchAdmin" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Views\SuggestedQueriesAdmin\*.*" target="\MissionSearchEpi\UI\Views\SuggestedQueriesAdmin" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\UI\Views\SynonymsAdmin\*.*" target="\MissionSearchEpi\UI\Views\SynonymsAdmin" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\Util\*.*" target="\MissionSearchEpi\Util" /> 
+	<file src="..\EpiSearchBase\MissionSearchEpi\Samples\*.*" target="\Samples" /> 
+</files>
+</package>
