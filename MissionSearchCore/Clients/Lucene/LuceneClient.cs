@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web.Hosting;
 
 namespace MissionSearch.Clients
 {
@@ -44,8 +45,15 @@ namespace MissionSearch.Clients
             if (string.IsNullOrEmpty(srchConnectionString))
                 throw new NotImplementedException("Solr Core undefined");
 
-            _srchConnStr = srchConnectionString;
-            
+            if (srchConnectionString.StartsWith("/"))
+            {
+                _srchConnStr = HostingEnvironment.MapPath(srchConnectionString);
+            }
+            else
+            {
+                _srchConnStr = srchConnectionString;
+            }
+
         }
 
        /// <summary>

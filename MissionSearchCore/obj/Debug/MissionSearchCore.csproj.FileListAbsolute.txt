@@ -54,3 +54,4 @@ C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Lucene.Net.Contrib.SpellChec
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\Newtonsoft.Json.xml
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\NLog.xml
 C:\iisweb\MissionSearch\MissionSearchCore\bin\Debug\System.Web.Optimization.xml
+C:\iisweb\MissionSearch\MissionSearchCore\obj\Debug\MissionSearchCore.csprojResolveAssemblyReference.cache
