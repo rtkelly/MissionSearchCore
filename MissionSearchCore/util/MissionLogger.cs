@@ -12,6 +12,7 @@ using System.Web.Hosting;
 
 namespace MissionSearch.Util
 {
+
     public class MissionLogger : ILogger
     {
         private Logger _logger;
