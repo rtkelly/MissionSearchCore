@@ -101,6 +101,10 @@
       <HintPath>..\packages\Lucene.Net.Contrib.3.0.3\lib\net40\Lucene.Net.Contrib.SpellChecker.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Lucene.Net.ObjectMapping, Version=1.0.3.0, Culture=neutral, PublicKeyToken=eb8993f7ddad3f4d, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lucene.Net.ObjectMapping.1.0.3\lib\net40\Lucene.Net.ObjectMapping.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
       <Private>True</Private>
@@ -142,17 +146,19 @@
     <Compile Include="Attributes\SearchIndex.cs" />
     <Compile Include="Attributes\SortField.cs" />
     <Compile Include="Clients\ICrawler.cs" />
+    <Compile Include="Clients\Lucene\LuceneMapper.cs" />
     <Compile Include="Clients\Nutch\NutchClient.cs" />
     <Compile Include="Clients\Nutch\NutchJob.cs" />
-    <Compile Include="Crawlers\CrawlerResults.cs" />
-    <Compile Include="Crawlers\IWebCrawler.cs" />
-    <Compile Include="Crawlers\IWebCrawlPage.cs" />
-    <Compile Include="Crawlers\PageExtractRequest.cs" />
-    <Compile Include="Crawlers\PageExtractResults.cs" />
-    <Compile Include="Crawlers\PageScrapper.cs" />
-    <Compile Include="Crawlers\WebCrawlBasePage.cs" />
-    <Compile Include="Crawlers\WebCrawler.cs" />
-    <Compile Include="Crawlers\WebCrawlJob.cs" />
+    <Compile Include="Crawlers\FolderCrawler\FolderCrawler.cs" />
+    <Compile Include="Crawlers\WebCrawler\CrawlerResults.cs" />
+    <Compile Include="Crawlers\ICrawler.cs" />
+    <Compile Include="Crawlers\WebCrawler\IWebCrawlPage.cs" />
+    <Compile Include="Crawlers\WebCrawler\PageExtractRequest.cs" />
+    <Compile Include="Crawlers\WebCrawler\PageExtractResults.cs" />
+    <Compile Include="Crawlers\WebCrawler\PageScrapper.cs" />
+    <Compile Include="Crawlers\WebCrawler\WebCrawlBasePage.cs" />
+    <Compile Include="Crawlers\WebCrawler\WebCrawler.cs" />
+    <Compile Include="Crawlers\WebCrawler\WebCrawlJob.cs" />
     <Compile Include="Indexers\ContentCrawlParameters.cs" />
     <Compile Include="Indexers\ContentIndexRequest.cs" />
     <Compile Include="Logger\ILogger.cs" />
@@ -218,6 +224,7 @@
     <Compile Include="Util\XmlParser.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

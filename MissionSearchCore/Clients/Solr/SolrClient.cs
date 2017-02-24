@@ -45,9 +45,7 @@ namespace MissionSearch.Clients
             if (jsonDoc == null)
                 return;
 
-            //jsonDoc = AppendToDoc(jsonDoc, doc);
             var bytes = Encoding.UTF8.GetBytes(string.Format("[{0}]", jsonDoc));
-
             var request = (HttpWebRequest)WebRequest.Create(EndPointAdd);
             request.Method = "POST";
             request.ContentType = "application/json";
@@ -99,9 +97,7 @@ namespace MissionSearch.Clients
             srchResponse.QueryString = string.Format("{0}{1}", EndPointSearch, SolrQueryBuilder.BuildSearchQuery(request));
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(srchResponse.QueryString);
-
-            //httpRequest.Timeout
-
+                        
             using (var webResponse = (HttpWebResponse)httpRequest.GetResponse())
             {
                 var webStream = webResponse.GetResponseStream();
@@ -123,8 +119,6 @@ namespace MissionSearch.Clients
                 {
                     srchResponse.Results = srchResponse.ResponseContainer.response.docs;
                 }
-                
-                return srchResponse;
             }
 
             srchResponse.QueryString = request.QueryText;
@@ -216,9 +210,6 @@ namespace MissionSearch.Clients
                     var responseXml = rdr.ReadToEnd();
                     return responseXml;
                 }
-
-
-                
             }
         }
 
@@ -228,7 +219,7 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="queryText"></param>
         /// <returns></returns>
-        public SearchResponse<T> Search(string queryText)
+        public new SearchResponse<T> Search(string queryText)
         {
             return Search(new SearchRequest()
             {
@@ -271,7 +262,6 @@ namespace MissionSearch.Clients
 
                         }
                     }
-
                 }
                 
                 if (responseContainer.facet_counts != null)
@@ -317,23 +307,9 @@ namespace MissionSearch.Clients
            
             if (string.IsNullOrEmpty(request.QueryText))
                 request.QueryText = "*:*";
-
-            // TO DO: replace with regex
-            request.QueryText = request.QueryText.Replace(">", "");
-            request.QueryText = request.QueryText.Replace("<", "");
-            request.QueryText = request.QueryText.Replace("#", "");
-            request.QueryText = request.QueryText.Replace("^", "");
-            request.QueryText = request.QueryText.Replace("&", "");
-            request.QueryText = request.QueryText.Replace("?", "");
-            request.QueryText = request.QueryText.Replace(")", "");
-            request.QueryText = request.QueryText.Replace("(", "");
-            request.QueryText = request.QueryText.Replace("]", "");
-            request.QueryText = request.QueryText.Replace("[", "");
-            request.QueryText = request.QueryText.Replace("{", "");
-            request.QueryText = request.QueryText.Replace("}", "");
-            request.QueryText = request.QueryText.Replace("~", "");
-            request.QueryText = request.QueryText.Replace("`", "");
-
+                       
+            request.QueryText = Regex.Replace(request.QueryText, @"[>|<|#|^|&|?|\)|\(|\]|\[|\}|\{|~|`]", "");
+           
             if (request.QueryText.Count(x => x == '"') == 1)
                 request.QueryText = request.QueryText.Replace("\"", "");
 

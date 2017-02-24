@@ -36,6 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -54,12 +55,16 @@
     <Compile Include="SearchDocument.cs" />
     <Compile Include="SolrClientUnitTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LuceneClientUnitTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MissionSearchCore\MissionSearchCore.csproj">
       <Project>{2cc7ce1d-6423-4fa7-a6d9-8e87364d885f}</Project>
       <Name>MissionSearchCore</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

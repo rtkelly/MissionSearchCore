@@ -17,28 +17,28 @@ namespace MissionSearch
         internal SolrResponseContainer ResponseContainer { get; set; }
 
         public List<dynamic> Results { get; set; }
-        
+
+        public List<Refinement> Refinements;
+
+        public int PageSize { get; set; }
+
+        internal int CurrentPage { get; set; }
+
+        public int TotalFound { get; set; }
+
+        public string SearchText { get; set; }
+
+        public string ErrorMessage { get; set; }
+
+        public bool Success { get; set; }
         
 
     }
     public class SearchResponse<T> : SearchResponse
     {
-        public List<T> Results { get; set; }
+        public new List<T> Results { get; set; }
         
-        public List<Refinement> Refinements;
-
-        public int PageSize { get; set; }
-        
-        internal int CurrentPage { get; set; }
-                
-        public int TotalFound { get; set; }
-        
-        public string SearchText { get; set; }
-        
-        public string ErrorMessage { get; set; }
-        
-        public bool Success { get; set; }
-        
+               
         internal int TotalPages
         {
             get
@@ -107,28 +107,7 @@ namespace MissionSearch
             Refinements = new List<Refinement>();
             Results = new List<T>();
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        /*
-        public List<RefinementItem> GetSelectedRefinements()
-        {
-            var selected = new List<RefinementItem>();
-
-            foreach(var r in Refinements)
-            {
-                foreach(var i in r.Items)
-                {
-                    if (i.Selected)
-                        selected.Add(i);
-                }
-            }
-
-            return selected;
-        }
-         * */
+               
 
 
         /// <summary>

@@ -4,6 +4,7 @@ using Lucene.Net.Index;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,19 +14,16 @@ using System.Web.Hosting;
 namespace MissionSearch.Clients
 {
 
-    public class LuceneClient<T> : ISearchClient<T> where T : ISearchDocument 
+    public class LuceneClient : ISearchClient
     {
         string _srchConnStr;
         public string SrchConnStr { get { return _srchConnStr; } }
 
         public int Timeout { get; set; }
 
-        string SearchDefaultField = "title";
 
-        Lucene.Net.Util.Version LuceneVer = Lucene.Net.Util.Version.LUCENE_30;
-
-        IndexWriter _Writer;
-        IndexWriter Writer
+        protected IndexWriter _Writer;
+        protected IndexWriter Writer
         {
             get
             {
@@ -36,6 +34,10 @@ namespace MissionSearch.Clients
             }
         }
 
+        public string SearchDefaultField = "content";
+
+        protected Lucene.Net.Util.Version LuceneVer = Lucene.Net.Util.Version.LUCENE_30;
+
         /// <summary>
         /// 
         /// </summary>
@@ -43,7 +45,7 @@ namespace MissionSearch.Clients
         public LuceneClient(string srchConnectionString)
         {
             if (string.IsNullOrEmpty(srchConnectionString))
-                throw new NotImplementedException("Solr Core undefined");
+                throw new NotImplementedException("Lucene Index undefined");
 
             if (srchConnectionString.StartsWith("/"))
             {
@@ -53,163 +55,285 @@ namespace MissionSearch.Clients
             {
                 _srchConnStr = srchConnectionString;
             }
-            
         }
 
-       /// <summary>
-       /// 
-       /// </summary>
-       /// <param name="queryText"></param>
-       /// <returns></returns>
-       public SearchResponse<T> Search(string queryText)
-       {
-            return Search(new SearchRequest()
+        /// <summary>
+        /// returns lucene index writer
+        /// </summary>
+        /// <returns></returns>
+        protected IndexWriter GetWriter()
+        {
+            var directory = FSDirectory.Open(SrchConnStr);
+            var analyzer = new StandardAnalyzer(LuceneVer);
+            
+            return new IndexWriter(directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="jsonDoc"></param>
+        public void Post(string jsonDoc)
+        {
+            var doc = JsonConvert.DeserializeObject<dynamic>(jsonDoc, new JsonSerializerSettings()
             {
-                QueryText = queryText,
+                MissingMemberHandling = MissingMemberHandling.Ignore,
             });
-       }
+
+            var luceneDoc = doc.ToDocument();
+
+            var key = new Term("id", doc.id);
+
+            Writer.UpdateDocument(key, luceneDoc);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="query"></param>
+        public void Delete(string query)
+        {
+ 	        throw new NotImplementedException();
+        }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public SearchResponse<T> Search(SearchRequest request)
+        public SearchResponse Search(SearchRequest request)
+        {
+            var srchResponse = new SearchResponse();
+            srchResponse.Results = new List<dynamic>();
+
+            var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
+            var searcher = new IndexSearcher(IndexReader.Open(directory, true));
+            var analyzer = new StandardAnalyzer(LuceneVer);
+
+            var qstr = new StringBuilder();
+            qstr.Append("+" + request.QueryText);
+            
+            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
+            var query = parser.Parse(qstr.ToString());
+
+            // TO DO: implement sort from request object
+            var sortField = new SortField("", SortField.SCORE);
+            var sort = new Sort(sortField);
+
+            BooleanFilter boolFilter = null;
+
+            foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
+            {
+                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
+                {
+                    if (boolFilter == null)
+                        boolFilter = new BooleanFilter();
+
+                    var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, filter.FieldValue + "*")));
+                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                }
+            }
+
+            var hits = searcher.Search(query, boolFilter, request.End, sort);
+
+            srchResponse.TotalFound = hits.TotalHits;
+            srchResponse.PageSize = request.PageSize;
+            srchResponse.CurrentPage = request.CurrentPage;
+
+            foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
+            {
+                var scoreDoc = searcher.Doc(hitScore.Doc);
+                srchResponse.Results.Add(scoreDoc.ToObject<dynamic>());
+            }
+            
+            srchResponse.SearchText = request.QueryText;
+
+            return srchResponse;
+        }
+                
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Commit()
+        {
+            //if (_Writer != null)
+           /// {
+            //    Writer.Commit();
+           // }
+        }
+
+
+        /// <summary>
+        /// Intialization after posting is completed
+        /// </summary>
+        public void PostCommit()
+        {
+            if (_Writer != null)
+            {
+                Writer.Optimize();
+                Writer.Commit();
+            }
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Close()
+        {
+            if (_Writer != null)
+            {
+                Writer.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        public void DeleteById(string id)
+        {
+            var term = new Term("id", id);
+            Writer.DeleteDocuments(term);
+            Writer.Optimize();
+            Writer.Commit();
+            Writer.Dispose();
+        }
+
+        /// <summary>
+        /// Intialization before posting begins
+        /// </summary>
+        public void PostInit()
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Reload()
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <param name="term"></param>
+        /// <returns></returns>
+        public List<string> GetTerms(string fieldName, string term)
+        {
+            throw new NotImplementedException();
+        }
+
+    }
+
+    public class LuceneClient<T> : LuceneClient, ISearchClient<T> where T : ISearchDocument 
+    {
+
+        /// <summary>
+        /// /
+        /// </summary>
+        /// <param name="srchConnectionString"></param>
+        public LuceneClient(string srchConnectionString) : base(srchConnectionString)
+        {
+          
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queryText"></param>
+        /// <returns></returns>
+        public SearchResponse<T> Search(string queryText)
+        {
+            return Search(new SearchRequest()
+            {
+                QueryText = queryText,
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public new SearchResponse<T> Search(SearchRequest request)
         {
             var srchResponse = new SearchResponse<T>();
             srchResponse.Results = new List<T>();
 
-            try
+            var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
+            var searcher = new IndexSearcher(IndexReader.Open(directory, true));
+            var analyzer = new StandardAnalyzer(LuceneVer);
+
+            var qstr = new StringBuilder();
+            qstr.Append("+" + request.QueryText);
+
+            /*
+            if (!string.IsNullOrEmpty(request.Facets))
             {
-                //var results = new List<Lucene.Net.Documents.Document>();
+                var rFields = refinements.Split(';');
 
-                var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
-                var searcher = new IndexSearcher(IndexReader.Open(directory, true));
-                var analyzer = new StandardAnalyzer(LuceneVer);
-
-                var qstr = new StringBuilder();
-                qstr.Append("+" + request.QueryText);
-
-                /*
-                if (!string.IsNullOrEmpty(request.Facets))
+                foreach (var rField in rFields)
                 {
-                    var rFields = refinements.Split(';');
+                    var fields = rField.Split('^');
 
-                    foreach (var rField in rFields)
-                    {
-                        var fields = rField.Split('^');
+                    if (fields.Count() != 2)
+                        continue;
 
-                        if (fields.Count() != 2)
-                            continue;
-
-                        //var facetFilter = new FieldCacheTermsFilter(fields[0], fields[1]);
-                        qstr.Append(string.Format(" +{0}:{1}", fields[0], fields[1]));
-                    }
-                }
-                */
-
-                var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
-                var query = parser.Parse(qstr.ToString());
-                
-                // TO DO: implement sort from request object
-                var sortField = new SortField("title", SortField.STRING);
-                var sort = new Sort(sortField);
-
-                BooleanFilter boolFilter = null;
-
-                //TermsFilter termsFilter = null;
-                
-                foreach(var filter in request.QueryOptions.OfType<FilterQuery>())
-                {
-                    if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
-                    {
-                        if (boolFilter == null)
-                            boolFilter = new BooleanFilter();
-
-                        var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, filter.FieldValue+"*")));
-                        boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
-                    }
-                }
-                                
-                var hits = searcher.Search(query, boolFilter, request.End, sort);
-
-                srchResponse.TotalFound = hits.TotalHits;
-                srchResponse.PageSize = request.PageSize;
-                srchResponse.CurrentPage = request.CurrentPage;
-
-                Type t = typeof(T);
-                var properties = t.GetProperties();
-
-                foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
-                {
-                    var searchDoc = (T)Activator.CreateInstance(typeof(T), new object[] { });
-
-                    var scoreDoc = searcher.Doc(hitScore.Doc);
-
-                    var fields = scoreDoc.GetFields();
-
-                    foreach (var field in fields)
-                    {
-                        try
-                        {
-                            var prop = properties.FirstOrDefault(p => p.Name == field.Name);
-
-                            if (prop != null)
-                            {
-                                switch (prop.PropertyType.Name)
-                                {
-                                    case "DateTime":
-                                        DateTime date;
-
-                                        if (DateTime.TryParse(field.StringValue, out date))
-                                            prop.SetValue(searchDoc, date);
-
-                                        break;
-
-                                    case "Int32":
-                                        int i;
-
-                                        if (int.TryParse(field.StringValue, out i))
-                                            prop.SetValue(searchDoc, i);
-
-                                        break;
-
-                                    case "Int64":
-                                        long l;
-
-                                        if (long.TryParse(field.StringValue, out l))
-                                            prop.SetValue(searchDoc, l);
-
-                                        break;
-
-                                    case "Boolean":
-                                        Boolean b;
-
-                                        if (Boolean.TryParse(field.StringValue, out b))
-                                            prop.SetValue(searchDoc, b);
-
-                                        break;
-
-                                    default:
-                                        prop.SetValue(searchDoc, field.StringValue.Trim());
-                                        break;
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            // TO DO: Handle errors
-                        }
-                    }
-
-
-                    
-                    srchResponse.Results.Add(searchDoc);
+                    //var facetFilter = new FieldCacheTermsFilter(fields[0], fields[1]);
+                    qstr.Append(string.Format(" +{0}:{1}", fields[0], fields[1]));
                 }
             }
-            catch
+            */
+
+            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
+            var query = parser.Parse(qstr.ToString());
+                
+            // TO DO: implement sort from request object
+            var sortField = new SortField("", SortField.SCORE);
+            var sort = new Sort(sortField);
+
+            BooleanFilter boolFilter = null;
+                        
+            foreach(var filter in request.QueryOptions.OfType<FilterQuery>())
             {
-                // TO DO: Handle errors
+                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
+                {
+                    if (boolFilter == null)
+                        boolFilter = new BooleanFilter();
+
+                    var queryFilter = new QueryWrapperFilter(new TermQuery(new Term(filter.ParameterName, filter.FieldValue.ToString())));
+                    boolFilter.Add(new FilterClause(queryFilter, Occur.SHOULD));
+                }
+                else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
+                {
+                    //if (boolFilter == null)
+                    //    boolFilter = new BooleanFilter();
+
+                    //var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, filter.FieldValue+"*")));
+                    //boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                }
+            }
+                                            
+            var hits = searcher.Search(query, boolFilter, request.End, sort);
+            
+            srchResponse.TotalFound = hits.TotalHits;
+            srchResponse.PageSize = request.PageSize;
+            srchResponse.CurrentPage = request.CurrentPage;
+                        
+            var luceneMapper = new LuceneMapper<T>();
+
+            foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
+            {
+                var scoreDoc = searcher.Doc(hitScore.Doc);
+                var srchDoc = luceneMapper.ToSearchDocument(scoreDoc);
+
+                srchResponse.Results.Add(srchDoc);
             }
 
             srchResponse.SearchText = request.QueryText;
@@ -234,8 +358,6 @@ namespace MissionSearch.Clients
             
             return bc;
         }
-       
-
 
         /// <summary>
         /// 
@@ -243,139 +365,50 @@ namespace MissionSearch.Clients
         /// <param name="doc"></param>
         public void Post(T doc)
         {
-            var luceneDoc = new Document();
-            //luceneDoc.Boost = (float) boost;
-
-            Type t = typeof(T);
-
-            var properties = t.GetProperties();
+            //var luceneDoc = doc.ToDocument();
             
-            string key = null;
+            var luceneMapper = new LuceneMapper<T>();
 
-            foreach(var property in properties)
-            {
-                var propValue = property.GetValue(doc);
+            var luceneDoc = luceneMapper.ToLuceneDocument(doc);
 
-                if (propValue != null)
-                {
-                    switch (property.Name)
-                    {
-                        case "id":
-                            key = propValue.ToString();
-                            luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
-                            break;
+            var idTerm = new Term("id", luceneDoc.GetField("id").StringValue);
 
-                        case "title":
-                            luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
-                            break;
-
-                        default:
-                            luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.ANALYZED));
-                            break;
-                    }
-                }
-            }
-
-            if (key != null)
-            {
-                try
-                {
-                    Writer.UpdateDocument(new Term("id", key), luceneDoc);
-                    //Writer.AddDocument(luceneDoc);
-                }
-                catch
-                {
-                    Writer.Dispose();
-                }
-            }
-
-        }
-       
-       
-
-        /// <summary>
-        /// returns lucene index writer
-        /// </summary>
-        /// <returns></returns>
-        private IndexWriter GetWriter()
-        {
-            var directory = FSDirectory.Open(SrchConnStr);
-            var analyzer = new StandardAnalyzer(LuceneVer);
-            
-            
-            return new IndexWriter(directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
-        }
-
-
-        /// <summary>
-        /// Intialization after posting is completed
-        /// </summary>
-        public void PostCommit()
-        {
-           if(_Writer != null)
-           {
-               Writer.Optimize();
-               Writer.Commit();
-           }
-
-        }
-
-        public void Close()
-        {
-            if (_Writer != null)
-            {
-                Writer.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Intialization before posting begins
-        /// </summary>
-        public void PostInit()
-        {
-            
-        }
-
-        /*
-        public List<string> GetSynonyms()
-        {
-            throw new NotImplementedException();
-        }
-         * */
-
-
-        public void DeleteById(string id)
-        {
-            var term = new Term("id", id);
-            Writer.DeleteDocuments(term);
-            Writer.Optimize();
-            Writer.Commit();
-            Writer.Dispose();
-        }
-
-
-        public List<string> GetTerms(string fieldName, string term)
-        {
-            throw new NotImplementedException();
+            Writer.UpdateDocument(idTerm, luceneDoc);
         }
         
-
-
-        public void Reload()
+               
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
+        public List<T> GetAll(string q)
         {
-            throw new NotImplementedException();
-        }
+            var indexedPages = new List<T>();
 
+            var response = Search(new SearchRequest()
+            {
+                QueryText = q,
+                PageSize = 500,
+            });
 
-        public void Delete(string query)
-        {
-            throw new NotImplementedException();
-        }
+            if (response.Results.Any())
+                indexedPages.AddRange(response.Results);
 
+            for (int page = 2; page <= response.PagingInfo.TotalPages; page++)
+            {
+                response = Search(new SearchRequest()
+                {
+                    QueryText = q,
+                    CurrentPage = page,
+                    PageSize = 500,
+                });
 
-        public List<T> GetAll(string queryText)
-        {
-            throw new NotImplementedException();
+                if (response.Results.Any())
+                    indexedPages.AddRange(response.Results);
+            }
+
+            return indexedPages;
         }
 
 
@@ -383,62 +416,19 @@ namespace MissionSearch.Clients
         {
             throw new NotImplementedException();
         }
+                
+
         
-        SearchResponse<T> ISearchClient<T>.Search(string queryText)
-        {
-            throw new NotImplementedException();
-        }
 
-        List<T> ISearchClient<T>.GetAll(string queryText)
+        public string FileExtract(byte[] fileBytes)
         {
             throw new NotImplementedException();
         }
+      
 
-        string ISearchClient<T>.FileExtract(byte[] fileBytes)
-        {
-            throw new NotImplementedException();
-        }
 
-        void ISearchClient<T>.Post(T doc)
-        {
-            throw new NotImplementedException();
-        }
 
-        void ISearchClient<T>.DeleteById(string id)
-        {
-            throw new NotImplementedException();
-        }
+
         
-        List<string> ISearchClient<T>.GetTerms(string fieldName, string term)
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient<T>.Commit()
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient<T>.Close()
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient<T>.Reload()
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public void Post(string jsonDoc)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        SearchResponse ISearchClient.Search(SearchRequest request)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

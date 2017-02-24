@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace MissionSearch.Crawlers
 {
-    public class WebCrawler<C, T> : IWebCrawler
+    public class WebCrawler<C, T> : ICrawler
         where T : ISearchDocument
         where C : IWebCrawlPage
     {

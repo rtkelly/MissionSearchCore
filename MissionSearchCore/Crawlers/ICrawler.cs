@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Crawlers
 {
-    public interface IWebCrawler
+    public interface ICrawler
     {
 
     }
