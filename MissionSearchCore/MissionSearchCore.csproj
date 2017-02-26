@@ -146,6 +146,7 @@
     <Compile Include="Attributes\SearchIndex.cs" />
     <Compile Include="Attributes\SortField.cs" />
     <Compile Include="Clients\ICrawler.cs" />
+    <Compile Include="Clients\Lucene\LucenceDoc.cs" />
     <Compile Include="Clients\Lucene\LuceneMapper.cs" />
     <Compile Include="Clients\Nutch\NutchClient.cs" />
     <Compile Include="Clients\Nutch\NutchJob.cs" />

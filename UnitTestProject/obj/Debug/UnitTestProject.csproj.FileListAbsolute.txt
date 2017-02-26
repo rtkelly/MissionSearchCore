@@ -47,5 +47,3 @@ C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProje
 C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProject\obj\Debug\UnitTestProject.dll
 C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProject\obj\Debug\UnitTestProject.pdb
 C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProject\bin\Debug\UnitTestProject.dll.config
-C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProject\bin\Debug\Lucene.Net.ObjectMapping.dll
-C:\iisweb\MissionSearch\MissionSearchCore\MissionSearchCore1.1.0.0\UnitTestProject\bin\Debug\Lucene.Net.ObjectMapping.xml

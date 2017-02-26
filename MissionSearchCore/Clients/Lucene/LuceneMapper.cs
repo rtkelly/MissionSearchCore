@@ -12,12 +12,21 @@ namespace MissionSearch.Clients
     {
         PropertyInfo[] Properties;
         
+        /// <summary>
+        /// 
+        /// </summary>
         public LuceneMapper()
         {
             Type t = typeof(T);
             Properties = t.GetProperties();
 
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <returns></returns>
         public Document ToLuceneDocument(T doc)
         {
             var luceneDoc = new Document();
@@ -64,7 +73,11 @@ namespace MissionSearch.Clients
             return luceneDoc;
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="scoreDoc"></param>
+        /// <returns></returns>
         public T ToSearchDocument(Document scoreDoc)
         {
             var searchDoc = (T)Activator.CreateInstance(typeof(T), new object[] { });

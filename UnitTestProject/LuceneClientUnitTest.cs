@@ -47,7 +47,7 @@ namespace UnitTestProject
         }
 
         [TestMethod]
-        public void TestTypedSearch()
+        public void TestSearch2()
         {
             var client = new LuceneClient(@"C:\iisweb\asrm\ASRM\App_Data\Index\Main");
 
@@ -58,13 +58,15 @@ namespace UnitTestProject
                 QueryText = "*:*",
             };
 
-            srchRequest.QueryOptions.Add(new FilterQuery("EPISERVER_SEARCH_TITLE", "pregnancy"));
+            srchRequest.QueryOptions.Add(new FilterQuery("EPISERVER_SEARCH_TYPE", FilterQuery.ConditionalTypes.Contains, "ASRM.Models.Pages.BasePageData"));
 
             var resp = client.Search(srchRequest);
 
             if (resp.Results.Any())
             {
-                var title = resp.Results.First().title;
+                var row = resp.Results.First();
+
+                var title = row.EPISERVER_SEARCH_TITLE;
             }
         }
     }

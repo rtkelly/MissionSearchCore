@@ -108,35 +108,13 @@ namespace MissionSearch.Clients
             srchResponse.Results = new List<dynamic>();
 
             var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
-            var searcher = new IndexSearcher(IndexReader.Open(directory, true));
-            var analyzer = new StandardAnalyzer(LuceneVer);
-
-            var qstr = new StringBuilder();
-            qstr.Append("+" + request.QueryText);
             
-            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
-            var query = parser.Parse(qstr.ToString());
+            var reader = IndexReader.Open(directory, true);
+            
+            var searcher = new IndexSearcher(reader);
 
-            // TO DO: implement sort from request object
-            var sortField = new SortField("", SortField.SCORE);
-            var sort = new Sort(sortField);
-
-            BooleanFilter boolFilter = null;
-
-            foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
-            {
-                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
-                {
-                    if (boolFilter == null)
-                        boolFilter = new BooleanFilter();
-
-                    var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, filter.FieldValue + "*")));
-                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
-                }
-            }
-
-            var hits = searcher.Search(query, boolFilter, request.End, sort);
-
+            var hits = BaseSearch(searcher, request);
+            
             srchResponse.TotalFound = hits.TotalHits;
             srchResponse.PageSize = request.PageSize;
             srchResponse.CurrentPage = request.CurrentPage;
@@ -144,14 +122,84 @@ namespace MissionSearch.Clients
             foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
             {
                 var scoreDoc = searcher.Doc(hitScore.Doc);
-                srchResponse.Results.Add(scoreDoc.ToObject<dynamic>());
+
+                var srchDoc = new LuceneDoc(scoreDoc);
+
+                srchResponse.Results.Add(srchDoc);
             }
             
             srchResponse.SearchText = request.QueryText;
 
             return srchResponse;
         }
-                
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        protected TopFieldDocs BaseSearch(IndexSearcher searcher, SearchRequest request)
+        {
+            var analyzer = new StandardAnalyzer(LuceneVer);
+
+            var qstr = new StringBuilder();
+            qstr.Append("+" + request.QueryText);
+
+            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
+            var query = parser.Parse(qstr.ToString());
+
+            // TO DO: implement sort from request object
+            var sortField = new SortField("", SortField.SCORE);
+            var sort = new Sort(sortField);
+
+            /*
+            if (!string.IsNullOrEmpty(request.Facets))
+            {
+                var rFields = refinements.Split(';');
+
+                foreach (var rField in rFields)
+                {
+                    var fields = rField.Split('^');
+
+                    if (fields.Count() != 2)
+                        continue;
+
+                    //var facetFilter = new FieldCacheTermsFilter(fields[0], fields[1]);
+                    qstr.Append(string.Format(" +{0}:{1}", fields[0], fields[1]));
+                }
+            }
+            */
+
+            BooleanFilter boolFilter = null;
+
+            foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
+            {
+                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
+                {
+                    if (boolFilter == null)
+                        boolFilter = new BooleanFilter();
+
+                    var queryFilter = new QueryWrapperFilter(new TermQuery(new Term(filter.ParameterName, filter.FieldValue.ToString())));
+                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                }
+                else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
+                {
+                    if (boolFilter == null)
+                        boolFilter = new BooleanFilter();
+
+                    var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, "*" + filter.FieldValue + "*")));
+                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                }
+            }
+
+            //var facetArray = request.Facets.Select(p => p.FieldName).ToArray;
+            //var sfs = new SimpleFacetedSearch(searcher.IndexReader, facetArray);
+            //var hits = sfs.Search(query, 10);
+
+            return searcher.Search(query, boolFilter, request.End, sort);
+        }
+         
 
         /// <summary>
         /// 
@@ -268,60 +316,9 @@ namespace MissionSearch.Clients
 
             var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
             var searcher = new IndexSearcher(IndexReader.Open(directory, true));
-            var analyzer = new StandardAnalyzer(LuceneVer);
 
-            var qstr = new StringBuilder();
-            qstr.Append("+" + request.QueryText);
-
-            /*
-            if (!string.IsNullOrEmpty(request.Facets))
-            {
-                var rFields = refinements.Split(';');
-
-                foreach (var rField in rFields)
-                {
-                    var fields = rField.Split('^');
-
-                    if (fields.Count() != 2)
-                        continue;
-
-                    //var facetFilter = new FieldCacheTermsFilter(fields[0], fields[1]);
-                    qstr.Append(string.Format(" +{0}:{1}", fields[0], fields[1]));
-                }
-            }
-            */
-
-            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
-            var query = parser.Parse(qstr.ToString());
-                
-            // TO DO: implement sort from request object
-            var sortField = new SortField("", SortField.SCORE);
-            var sort = new Sort(sortField);
-
-            BooleanFilter boolFilter = null;
+            var hits = BaseSearch(searcher, request);
                         
-            foreach(var filter in request.QueryOptions.OfType<FilterQuery>())
-            {
-                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
-                {
-                    if (boolFilter == null)
-                        boolFilter = new BooleanFilter();
-
-                    var queryFilter = new QueryWrapperFilter(new TermQuery(new Term(filter.ParameterName, filter.FieldValue.ToString())));
-                    boolFilter.Add(new FilterClause(queryFilter, Occur.SHOULD));
-                }
-                else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
-                {
-                    //if (boolFilter == null)
-                    //    boolFilter = new BooleanFilter();
-
-                    //var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, filter.FieldValue+"*")));
-                    //boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
-                }
-            }
-                                            
-            var hits = searcher.Search(query, boolFilter, request.End, sort);
-            
             srchResponse.TotalFound = hits.TotalHits;
             srchResponse.PageSize = request.PageSize;
             srchResponse.CurrentPage = request.CurrentPage;
