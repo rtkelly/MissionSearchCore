@@ -9,6 +9,7 @@ using MissionSearch.Util;
 using System.Text.RegularExpressions;
 using System.Web;
 using MissionSearch.Search.Facets;
+using MissionSearch.Search.Refinements;
 
 namespace MissionSearch.Clients
 {
@@ -527,7 +528,7 @@ namespace MissionSearch.Clients
                             Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("\"{0}\"", item))),
                         };
 
-                        facetItem.Refinement = AddRemoveRefinement(facetItem, request.Refinements, fieldFacet.RefinementOption);
+                        facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, fieldFacet.RefinementOption);
                         facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
 
                         //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));                        
@@ -574,7 +575,7 @@ namespace MissionSearch.Clients
                             Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("\"{0}\"", item))),
                         };
 
-                        facetItem.Refinement = AddRemoveRefinement(facetItem, request.Refinements, categoryFacet.RefinementOption);
+                        facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, categoryFacet.RefinementOption);
                         facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
                         
                         refinement.Items.Add(facetItem);
@@ -639,7 +640,7 @@ namespace MissionSearch.Clients
                         Selected = currentFilterQueries.Any(f => f.FieldValue.ToString() == propValue)
                     };
 
-                    facetItem.Refinement = AddRemoveRefinement(facetItem, request.Refinements, rangeFacet.RefinementOption);
+                    facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, rangeFacet.RefinementOption);
                     facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
                     //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));
 
@@ -690,7 +691,7 @@ namespace MissionSearch.Clients
                         Selected = currentFilterQueries.ToList().Any(f => f.FieldValue.ToString() == propValue),
                     };
 
-                    facetItem.Refinement = AddRemoveRefinement(facetItem, request.Refinements, dateFacet.RefinementOption);
+                    facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, dateFacet.RefinementOption);
                     facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
                     //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));
 
@@ -705,92 +706,7 @@ namespace MissionSearch.Clients
                 //.ToList();
         }
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="currentRefinementsStr"></param>
-        /// <param name="refinement"></param>
-        /// <param name="refinementType"></param>
-        /// <returns></returns>
-        public string AddRemoveRefinement(RefinementItem refinement, string currentRefinementsStr, RefinementType refinementType)
-        {
-            var refinementStr = string.Format("{0};{1};{2}", refinement.Name, refinement.Value, refinement.GroupLabel);
-                        
-            if (string.IsNullOrEmpty(currentRefinementsStr))
-            {
-                return StringEncoder.EncodeString(refinementStr);
-            }
-
-            var decodedCurrentRefinements = StringEncoder.DecodeString(currentRefinementsStr) ?? "";
-            
-            var currentRefinements = decodedCurrentRefinements.Split(',').ToList();
-            
-            var currentRefinementItems = currentRefinements.Select(r => new RefinementItem(r)).ToList();
-           
-            switch (refinementType)
-            {
-                case RefinementType.SingleSelect:
-
-                    if (decodedCurrentRefinements.Contains(refinementStr))
-                    {
-                        return StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => p != refinementStr)));
-                    }
-                    else if (decodedCurrentRefinements.Contains(refinement.GroupLabel))
-                    {
-                        decodedCurrentRefinements = string.Join(",", currentRefinements.Where(p => !p.Contains(refinement.GroupLabel)));
-                        
-                        return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-                    }
-
-                    break;
-
-                case RefinementType.MultiSelect:
-
-                    var likeRefinement = currentRefinementItems.FirstOrDefault(p => p.GroupLabel == refinement.GroupLabel);
-                    
-                    if(likeRefinement != null)
-                    {
-                        var rawValues = likeRefinement.Value.Replace("(", "").Replace(")", "");
-
-                        var values = Regex.Split(rawValues, " OR ");
-
-                        var valueStr = string.Join(" OR ", values.Where(v => v != refinement.Value));
-
-                        if (values.Any(v => v == refinement.Value))
-                        {
-                            refinementStr = (string.IsNullOrEmpty(valueStr)) ? "" : string.Format("{0};({1});{2}", refinement.Name, valueStr, refinement.GroupLabel);
-                        }
-                        else
-                        {
-                            refinementStr = string.Format("{0};({1} OR {2});{3}", refinement.Name, valueStr, refinement.Value, refinement.GroupLabel);
-                        }
-
-                        decodedCurrentRefinements = string.Join(",", currentRefinements.Where(p => !p.Contains(refinement.GroupLabel)));
-
-                        return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-                    }
-                                        
-                    return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-                    //return StringEncoder.EncodeString(refinementStr);
-                                       
                   
-                default:
-                        
-                    if (decodedCurrentRefinements.Contains(refinementStr))
-                    {
-                        return StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => p != refinementStr)));
-                    }
-                     
-                    break;
-            }
-
-            return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-            
-           
-
-        }
-        
         /// <summary>
         /// 
         /// </summary>

@@ -46,6 +46,11 @@ namespace MissionSearch.Clients
                             key = propValue.ToString();
                             luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
                             break;
+                        case "title":
+                            luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.ANALYZED));
+                            luceneDoc.Add(new Field(property.Name+"_sortable", propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+                            break;
+
                         default:
                             switch(property.PropertyType.Name)
                             {

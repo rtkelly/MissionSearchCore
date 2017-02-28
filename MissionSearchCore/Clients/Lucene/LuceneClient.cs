@@ -4,6 +4,7 @@ using Lucene.Net.Index;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
+using MissionSearch.Search.Refinements;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -113,11 +114,16 @@ namespace MissionSearch.Clients
             
             var searcher = new IndexSearcher(reader);
 
-            var hits = BaseSearch(searcher, request);
-            
+            var query = BuildQuery(searcher, request);
+            //var filters = LoadFilters(request);
+            var sortOrder = BuildSort(request);
+            //var hits =  searcher.Search(query, filters, request.End, sortOrder);
+            var hits = searcher.Search(query, null, request.End, sortOrder);
+
             srchResponse.TotalFound = hits.TotalHits;
             srchResponse.PageSize = request.PageSize;
             srchResponse.CurrentPage = request.CurrentPage;
+            srchResponse.Refinements = LoadRefinements(searcher, request, query);
 
             foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
             {
@@ -139,67 +145,177 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        protected TopFieldDocs BaseSearch(IndexSearcher searcher, SearchRequest request)
+        protected Query BuildQuery(IndexSearcher searcher, SearchRequest request)
         {
             var analyzer = new StandardAnalyzer(LuceneVer);
 
-            var qstr = new StringBuilder();
-            qstr.Append("+" + request.QueryText);
+            var mainQuery = new StringBuilder();
+            mainQuery.Append("+" + request.QueryText);
+
+            var filters = LoadFilters(request);
+
+            if (!string.IsNullOrEmpty(filters))
+            {
+                mainQuery.Append(filters);
+            }
 
             var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
-            var query = parser.Parse(qstr.ToString());
+            
+            var query = parser.Parse(mainQuery.ToString());
 
-            // TO DO: implement sort from request object
-            var sortField = new SortField("", SortField.SCORE);
-            var sort = new Sort(sortField);
 
-            /*
-            if (!string.IsNullOrEmpty(request.Facets))
+            return query;
+        }
+
+
+        protected Sort BuildSort(SearchRequest request)
+        {
+            var sortOrder = new Sort();
+
+            if (!request.Sort.Any())
             {
-                var rFields = refinements.Split(';');
-
-                foreach (var rField in rFields)
-                {
-                    var fields = rField.Split('^');
-
-                    if (fields.Count() != 2)
-                        continue;
-
-                    //var facetFilter = new FieldCacheTermsFilter(fields[0], fields[1]);
-                    qstr.Append(string.Format(" +{0}:{1}", fields[0], fields[1]));
-                }
+                sortOrder.SetSort(new SortField("", SortField.SCORE));
             }
-            */
+            else
+            {
+                var sorts = new List<SortField>();
 
-            BooleanFilter boolFilter = null;
+                foreach (var sort in request.Sort)
+                {
+                    var order = (sort.Order == SortOrder.SortOption.Ascending) ? false : true;
+
+                    sorts.Add(new SortField(sort.SortField, SortField.STRING, order));
+                }
+
+                sortOrder = new Sort(sorts.ToArray());
+
+            }
+
+            return sortOrder;
+        }
+         
+        /*
+        protected BooleanFilter LoadFilters(SearchRequest request)
+        {
+            var filters = new BooleanFilter();
+            var cnt = 0;
 
             foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
             {
                 if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
                 {
-                    if (boolFilter == null)
-                        boolFilter = new BooleanFilter();
-
                     var queryFilter = new QueryWrapperFilter(new TermQuery(new Term(filter.ParameterName, filter.FieldValue.ToString())));
-                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                    filters.Add(new FilterClause(queryFilter, Occur.MUST));
+                    cnt++;
                 }
                 else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
                 {
-                    if (boolFilter == null)
-                        boolFilter = new BooleanFilter();
-
                     var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, "*" + filter.FieldValue + "*")));
-                    boolFilter.Add(new FilterClause(queryFilter, Occur.MUST));
+                    filters.Add(new FilterClause(queryFilter, Occur.MUST));
+                    cnt++;
                 }
             }
 
-            //var facetArray = request.Facets.Select(p => p.FieldName).ToArray;
-            //var sfs = new SimpleFacetedSearch(searcher.IndexReader, facetArray);
-            //var hits = sfs.Search(query, 10);
+            if (!string.IsNullOrEmpty(request.Refinements))
+            {
+                var currentRefinements = QueryOptions.ParseRefinementString(request.Refinements);
 
-            return searcher.Search(query, boolFilter, request.End, sort);
+                foreach (var refinement in currentRefinements)
+                {
+                    var terms = new string[] { refinement.FieldValue.ToString() };
+
+                    filters.Add(new FilterClause(new FieldCacheTermsFilter(refinement.ParameterName, terms), Occur.MUST));
+                    cnt++;
+                }
+            }
+
+            if (cnt == 0)
+                filters = null;
+
+            return filters;
         }
-         
+         */
+
+        protected string LoadFilters(SearchRequest request)
+        {
+            var filters = new StringBuilder();
+            
+            foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
+            {
+                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
+                {
+                    filters.Append(string.Format(" +{0}:{1}", filter.ParameterName, filter.FieldValue));
+                }
+                else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
+                {
+                    filters.Append(string.Format(" +{0}:*{1}*", filter.ParameterName, filter.FieldValue));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(request.Refinements))
+            {
+                var currentRefinements = QueryOptions.ParseRefinementString(request.Refinements);
+
+                foreach (var refinement in currentRefinements)
+                {
+                    filters.Append(string.Format(" +{0}:{1}", refinement.ParameterName, refinement.FieldValue));
+                }
+            }
+
+            return filters.ToString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        protected List<Refinement> LoadRefinements(IndexSearcher searcher, SearchRequest request, Query query)
+        {
+            var refinements = new List<Refinement>();
+
+            var currentFilterQueries = QueryOptions.ParseRefinementString(request.Refinements);
+
+            foreach (var facet in request.Facets)
+            {
+                var sfs = new SimpleFacetedSearch(searcher.IndexReader, facet.FieldName);
+                var hits = sfs.Search(query);
+
+                var refinement = new Refinement()
+                {
+                    Name = facet.FieldName,
+                    Label = facet.FieldLabel,
+                    Items = new List<RefinementItem>(),
+                };
+
+                refinements.Add(refinement);
+
+                foreach (var hit in hits.HitsPerFacet)
+                {
+                    if (hit.HitCount == 0)
+                        continue;
+
+                    var item = new RefinementItem()
+                    {
+                        Name = refinement.Name,
+                        DisplayName = hit.Name.ToString(),
+                        Count = hit.HitCount,
+                        Value = hit.Name.ToString(),
+                        Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("{0}", hit.Name.ToString()))),
+                        
+                    };
+
+                    item.Refinement = RefinementBuilder.AddRemoveRefinement(item, request.Refinements, facet.RefinementOption);
+                    item.Link = string.Format("&ref={0}", item.Refinement);
+                    
+                    refinement.Items.Add(item);
+                }
+
+                refinement.Items = refinement.Items.OrderByDescending(p => p.Count).ToList();
+            }
+
+            return refinements; 
+        }
 
         /// <summary>
         /// 
@@ -317,11 +433,16 @@ namespace MissionSearch.Clients
             var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
             var searcher = new IndexSearcher(IndexReader.Open(directory, true));
 
-            var hits = BaseSearch(searcher, request);
-                        
+            var query = BuildQuery(searcher, request);
+            //var filters = LoadFilters(request);
+            var sortOrder = BuildSort(request);
+            //var hits = searcher.Search(query, filters, request.End, sortOrder);
+            var hits = searcher.Search(query, null, request.End, sortOrder);
+
             srchResponse.TotalFound = hits.TotalHits;
             srchResponse.PageSize = request.PageSize;
             srchResponse.CurrentPage = request.CurrentPage;
+            srchResponse.Refinements = LoadRefinements(searcher, request, query);
                         
             var luceneMapper = new LuceneMapper<T>();
 
