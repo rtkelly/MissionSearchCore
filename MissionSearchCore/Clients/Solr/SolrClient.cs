@@ -273,7 +273,7 @@ namespace MissionSearch.Clients
                 // request.QueryIndexer.AddUpdateTerm(request.QueryText, request.Language);
                 //}
 
-                if (request.Facets.OfType<IFacet>().Any(f => f.RefinementOption == RefinementType.MultiSelect || f.RefinementOption == RefinementType.SingleSelect))
+                if (request.Facets.OfType<IFacet>().Any(f => f.RefinementOption == RefinementType.Multi_Select || f.RefinementOption == RefinementType.Single_Select))
                 {
                     UpdateFacetCounts(request, srchResponse);
                 }
@@ -283,11 +283,14 @@ namespace MissionSearch.Clients
             
                 foreach (var facet in request.Facets)
                 {
-                    var first = srchResponse.Refinements.FirstOrDefault(r => r.Label == facet.FieldLabel);
-
-                    if (first != null)
+                    if (facet.Sort == FacetSortOption.Count)
                     {
-                        first.Items = SortRefinementItems(first, facet.Sort);
+                        var first = srchResponse.Refinements.FirstOrDefault(r => r.Label == facet.FieldLabel);
+
+                        if (first != null)
+                        {
+                            first.Items = SortRefinementItems(first, facet.Sort);
+                        }
                     }
                 }
                 
@@ -357,8 +360,8 @@ namespace MissionSearch.Clients
             if (string.IsNullOrEmpty(request.Refinements))
                 return;
 
-            var facets = request.Facets.OfType<IFacet>().Where(f => f.RefinementOption == RefinementType.MultiSelect
-                    || f.RefinementOption == RefinementType.SingleSelect).ToList();
+            var facets = request.Facets.OfType<IFacet>().Where(f => f.RefinementOption == RefinementType.Multi_Select
+                    || f.RefinementOption == RefinementType.Single_Select).ToList();
 
             var decodedCurrentRefinements = StringEncoder.DecodeString(request.Refinements) ?? "";
             var currentRefinements = decodedCurrentRefinements.Split(',').ToList();
@@ -411,9 +414,13 @@ namespace MissionSearch.Clients
             {
                 return refinement.Items.OrderBy(p => p.DisplayName).ToList();
             }
-            else
+            else if(sortOption == FacetSortOption.Count)
             {
                 return refinement.Items.OrderByDescending(p => p.Count).ThenBy(p => p.DisplayName).ToList();
+            }
+            else
+            {
+                return refinement.Items;
             }
         }
 
@@ -528,10 +535,14 @@ namespace MissionSearch.Clients
                             Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("\"{0}\"", item))),
                         };
 
+                        if (request.RefinementType != null)
+                        {
+                            fieldFacet.RefinementOption = request.RefinementType.Value;
+                        }
+                        
                         facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, fieldFacet.RefinementOption);
                         facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
 
-                        //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));                        
                         refinement.Items.Add(facetItem);
                      }
 
@@ -575,6 +586,11 @@ namespace MissionSearch.Clients
                             Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("\"{0}\"", item))),
                         };
 
+                        if (request.RefinementType != null)
+                        {
+                            categoryFacet.RefinementOption = request.RefinementType.Value;
+                        }
+                        
                         facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, categoryFacet.RefinementOption);
                         facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
                         
@@ -640,9 +656,13 @@ namespace MissionSearch.Clients
                         Selected = currentFilterQueries.Any(f => f.FieldValue.ToString() == propValue)
                     };
 
+                    if (request.RefinementType != null)
+                    {
+                        rangeFacet.RefinementOption = request.RefinementType.Value;
+                    }
+                    
                     facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, rangeFacet.RefinementOption);
                     facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
-                    //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));
 
                     if (refinement != null) refinement.Items.Add(facetItem);
                 }
@@ -659,7 +679,7 @@ namespace MissionSearch.Clients
                     var format = "yyyy";
 
                     var refinement = refinements.FirstOrDefault(r => r.Name == propName);
-
+                    
                     var label = "";
 
                     if (start == null && end != null)
@@ -691,9 +711,13 @@ namespace MissionSearch.Clients
                         Selected = currentFilterQueries.ToList().Any(f => f.FieldValue.ToString() == propValue),
                     };
 
+                    if (request.RefinementType != null)
+                    {
+                        dateFacet.RefinementOption = request.RefinementType.Value;
+                    }
+                    
                     facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, dateFacet.RefinementOption);
                     facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
-                    //facetItem.Link = string.Format("&ref={0}", AddRemoveRefinement(facetItem, request.Refinements, request.RefinementType));
 
                     if (refinement != null) refinement.Items.Add(facetItem);
                 }
@@ -715,7 +739,10 @@ namespace MissionSearch.Clients
         /// <returns></returns>
         public List<string> GetTerms(string fieldName, string term)
         {
-            var EndPointGetResources = string.Format("{0}/terms?wt=json&terms.fl={1}&terms.sort=index&terms.lower={2}", SrchConnStr, fieldName, term);
+
+            var EndPointGetResources = string.IsNullOrEmpty(term) ? 
+                string.Format("{0}/terms?wt=json&terms.fl={1}", SrchConnStr, fieldName) :
+                string.Format("{0}/terms?wt=json&terms.fl={1}&terms.sort=index&terms.lower={2}", SrchConnStr, fieldName, term);
 
             var json = HttpClient.GetRequest(EndPointGetResources);
 

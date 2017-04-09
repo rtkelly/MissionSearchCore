@@ -7,9 +7,9 @@ namespace MissionSearch
 {
     public enum RefinementType
     {
-        SingleSelect,
-        MultiSelect,
-        Refinement
+        Refinement,
+        Single_Select,
+        Multi_Select,
     }
 
     public class Refinement

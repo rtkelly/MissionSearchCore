@@ -371,6 +371,22 @@ namespace MissionSearch.Util
 
         }
 
+        public List<string> ParseToList(string xpath)
+        {
+            var list = new List<string>();
+
+            if (xDoc == null || string.IsNullOrEmpty(xpath))
+                return list;
+
+            (from b in xDoc.XPathSelectElements(xpath)
+             select b.Value)
+                .ToList()
+                .ForEach(value => list.Add(value));
+
+            return list;
+
+        }
+
         public XmlParser ParseFirst(string xpath)
         {
             if (xDoc == null)

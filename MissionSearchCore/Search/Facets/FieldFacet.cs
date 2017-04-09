@@ -10,8 +10,9 @@ namespace MissionSearch
 {
     public enum FacetSortOption
     {
-        Count = 0,
-        Name = 1,
+        None = 0,
+        Count = 1,
+        Name = 2,
     }
 
     public class FieldFacet : IFacet

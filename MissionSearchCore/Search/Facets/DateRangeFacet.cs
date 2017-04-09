@@ -27,6 +27,7 @@ namespace MissionSearch
             FieldLabel = fieldLabel;
             RefinementOption = RefinementType.Refinement;
             Ranges = new List<DateRange>();
+            Sort = FacetSortOption.None;
         }
                 
         public DateRangeFacet(string fieldName, string fieldLabel, RefinementType refinementOption)
@@ -35,6 +36,7 @@ namespace MissionSearch
             FieldLabel = fieldLabel;
             RefinementOption = refinementOption;
             Ranges = new List<DateRange>();
+            Sort = FacetSortOption.None;
         }
                
         

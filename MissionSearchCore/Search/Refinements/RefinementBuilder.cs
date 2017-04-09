@@ -34,7 +34,7 @@ namespace MissionSearch.Search.Refinements
 
             switch (refinementType)
             {
-                case RefinementType.SingleSelect:
+                case RefinementType.Single_Select:
 
                     if (decodedCurrentRefinements.Contains(refinementStr))
                     {
@@ -49,7 +49,7 @@ namespace MissionSearch.Search.Refinements
 
                     break;
 
-                case RefinementType.MultiSelect:
+                case RefinementType.Multi_Select:
 
                     var likeRefinement = currentRefinementItems.FirstOrDefault(p => p.GroupLabel == refinement.GroupLabel);
 

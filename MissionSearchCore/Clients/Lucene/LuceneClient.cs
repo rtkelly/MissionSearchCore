@@ -81,6 +81,9 @@ namespace MissionSearch.Clients
             {
                 MissingMemberHandling = MissingMemberHandling.Ignore,
             });
+            
+            // to do: remove lucene object mapper
+            // replace with json lucene doc mapper class
 
             var luceneDoc = doc.ToDocument();
 

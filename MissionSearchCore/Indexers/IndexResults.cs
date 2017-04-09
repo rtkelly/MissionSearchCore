@@ -16,6 +16,13 @@ namespace MissionSearch.Indexers
         public TimeSpan Duration { get; set; }
 
         public bool Stopped { get; set; }
-                
+            
+        public IndexResults Combine(IndexResults results1)
+        {
+            TotalCnt += results1.TotalCnt;
+            ErrorCnt += results1.ErrorCnt;
+
+            return this;
+        }
     }
 }

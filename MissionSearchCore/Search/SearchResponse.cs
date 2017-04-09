@@ -184,6 +184,27 @@ namespace MissionSearch
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public List<RefinementItem> GetSelectedRefinements()
+        {
+            var selected = new List<RefinementItem>();
+
+            foreach (var r in Refinements)
+            {
+                foreach (var i in r.Items)
+                {
+                    if (i.Selected)
+                        selected.Add(i);
+                }
+            }
+
+            return selected;
+        }
+
+
 
 
     }
