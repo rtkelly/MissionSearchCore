@@ -329,22 +329,23 @@ namespace MissionSearch.Clients
             }
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(srchResponse.QueryString);
-
+             
             using (var webResponse = (HttpWebResponse)httpRequest.GetResponse())
             {
-                var webStream = webResponse.GetResponseStream();
-
-                if (webStream == null)
-                    return srchResponse;
-
-                using (var rdr = new StreamReader(webStream))
+                using (var webStream = webResponse.GetResponseStream())
                 {
-                    srchResponse.JsonResponse = rdr.ReadToEnd();
-                }
-                   
-                srchResponse.PageSize = request.PageSize;
-                srchResponse.CurrentPage = request.CurrentPage;
-                srchResponse.Success = true;
+                    if (webStream == null)
+                        return srchResponse;
+
+                    using (var rdr = new StreamReader(webStream))
+                    {
+                        srchResponse.JsonResponse = rdr.ReadToEnd();
+                    }
+
+                    srchResponse.PageSize = request.PageSize;
+                    srchResponse.CurrentPage = request.CurrentPage;
+                    srchResponse.Success = true;
+                }             
 
                 return srchResponse;
             }
@@ -453,7 +454,10 @@ namespace MissionSearch.Clients
         public void Commit()
         {
             var request = (HttpWebRequest)WebRequest.Create(EndPointCommit);
-            request.GetResponse();   
+            using(var response = request.GetResponse())
+            {
+
+            }
         }
 
 

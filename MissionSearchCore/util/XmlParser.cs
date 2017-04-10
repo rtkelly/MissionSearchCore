@@ -32,6 +32,11 @@ namespace MissionSearch.Util
             Xml = xml;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="xml"></param>
+        /// <param name="namespaceManager"></param>
         public XmlParser(string xml, XmlNamespaceManager namespaceManager)
         {
             xDoc = XDocument.Parse((!string.IsNullOrEmpty(xml)) ? xml : "<root></root>");
@@ -40,11 +45,24 @@ namespace MissionSearch.Util
 
             Xml = xml;
         }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string StripXml(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
 
-        
-        
+            var str = Regex.Replace(input, "<\\?.*?>", String.Empty);
+            str = Regex.Replace(str, "<.*?>", String.Empty);
+            str = HtmlParser.StripFormating(str);
+            str = HtmlParser.StripComments(str);
 
-        
+            return str;
+        }
 
         /// <summary>
         /// Takes a given xPath of an XML document and returns a value

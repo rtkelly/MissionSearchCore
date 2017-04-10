@@ -177,8 +177,11 @@ namespace MissionSearch.Indexers
                 }
             }
 
-            SearchClient.Commit();
-            SearchClient.Close();
+            if (contentItems.Any())
+            {
+                SearchClient.Commit();
+                SearchClient.Close();
+            }
 
             return results;
         }
