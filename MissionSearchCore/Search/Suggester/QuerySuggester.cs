@@ -31,13 +31,14 @@ namespace MissionSearch.Suggester
         /// </summary>
         /// <param name="srchConnectionString"></param>
         /// <param name="provider"></param>
-       public QuerySuggester(string srchConnectionString, Provider provider)
+       /*
+        public QuerySuggester(string srchConnectionString, Provider provider)
        {
            switch(provider)
            {
-               case Provider.Lucene:
-                   SrchClient = new LuceneClient<QuerySuggesterDocument>(srchConnectionString);
-                   break;
+               //case Provider.Lucene:
+               //    SrchClient = new LuceneClient<QuerySuggesterDocument>(srchConnectionString);
+                //   break;
 
                case Provider.Solr:
                    SrchClient = new SolrClient<QuerySuggesterDocument>(srchConnectionString);
@@ -46,6 +47,7 @@ namespace MissionSearch.Suggester
            }
            //Client = srchClient;
        }
+        * */
 
         /// <summary>
         /// 

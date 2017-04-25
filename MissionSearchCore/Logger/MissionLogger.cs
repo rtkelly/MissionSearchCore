@@ -37,7 +37,7 @@ namespace MissionSearch.Util
 
      private void IntializeLogger(string logPath, LoggerLevel logLevel)
      {
-         if(logPath.StartsWith("/"))
+         if (logPath.StartsWith("/"))
          {
              logPath = HostingEnvironment.MapPath(logPath);
          }

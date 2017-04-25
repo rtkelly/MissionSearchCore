@@ -4,15 +4,16 @@ using Lucene.Net.Index;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
+using MissionSearch;
+using MissionSearch.Clients;
 using MissionSearch.Search.Refinements;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web.Hosting;
 
-namespace MissionSearch.Clients
+namespace MissionSearch.LuceneClient
 {
 
     public class LuceneClient : ISearchClient
@@ -48,14 +49,14 @@ namespace MissionSearch.Clients
             if (string.IsNullOrEmpty(srchConnectionString))
                 throw new NotImplementedException("Lucene Index undefined");
 
-            if (srchConnectionString.StartsWith("/"))
-            {
-                _srchConnStr = HostingEnvironment.MapPath(srchConnectionString);
-            }
-            else
-            {
+            //if (srchConnectionString.StartsWith("/"))
+            //{
+                //_srchConnStr = HostingEnvironment.MapPath(srchConnectionString);
+           // }
+           // else
+           // {
                 _srchConnStr = srchConnectionString;
-            }
+           // }
         }
 
         /// <summary>

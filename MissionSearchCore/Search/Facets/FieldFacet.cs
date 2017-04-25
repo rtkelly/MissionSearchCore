@@ -13,6 +13,7 @@ namespace MissionSearch
         None = 0,
         Count = 1,
         Name = 2,
+        NameDesc = 3,
     }
 
     public class FieldFacet : IFacet

@@ -419,6 +419,10 @@ namespace MissionSearch.Clients
             {
                 return refinement.Items.OrderByDescending(p => p.Count).ThenBy(p => p.DisplayName).ToList();
             }
+            else if (sortOption == FacetSortOption.NameDesc)
+            {
+                return refinement.Items.OrderByDescending(p => p.DisplayName).ToList();
+            }
             else
             {
                 return refinement.Items;
@@ -508,7 +512,9 @@ namespace MissionSearch.Clients
                     
                 }
             }
-                    
+
+            var itemCnt = 0;
+
             // load field facets 
             foreach (var fieldFacet in request.Facets.OfType<FieldFacet>())
             {
@@ -524,6 +530,7 @@ namespace MissionSearch.Clients
                     var itemValues = items.Where((elem, idx) => idx % 2 == 0).ToList();
                     var itemCounts = items.Where((elem, idx) => idx % 2 != 0).ToList();
 
+                    
                     foreach(var item in itemValues)
                     {
                         var queryParm = new FilterQuery(refinement.Name, item);
@@ -531,6 +538,7 @@ namespace MissionSearch.Clients
 
                         var facetItem = new RefinementItem()
                         {
+                            Id = string.Format("{0}", ++itemCnt), 
                             Name = refinement.Name,
                             GroupLabel = refinement.Label,
                             DisplayName = item,
@@ -545,7 +553,15 @@ namespace MissionSearch.Clients
                         }
                         
                         facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, fieldFacet.RefinementOption);
-                        facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+
+                        if (facetItem.Refinement != string.Empty)
+                        {
+                            facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                        }
+                        else
+                        {
+                            facetItem.Link = string.Empty;
+                        }
 
                         refinement.Items.Add(facetItem);
                      }
@@ -570,6 +586,7 @@ namespace MissionSearch.Clients
                 var itemValues = items.Where((elem, idx) => idx % 2 == 0).ToList();
                 var itemCounts = items.Where((elem, idx) => idx % 2 != 0).ToList();
 
+                
                 foreach (var item in itemValues)
                 {
                     if (item == categoryFacet.CategoryName)
@@ -582,6 +599,7 @@ namespace MissionSearch.Clients
                     {
                         var facetItem = new RefinementItem()
                         {
+                            Id = string.Format("{0}", ++itemCnt), 
                             Name = categoryFacet.FieldName,
                             GroupLabel = categoryFacet.FieldLabel,
                             DisplayName = item.Replace(categoryPath, "").Trim(),
@@ -596,8 +614,16 @@ namespace MissionSearch.Clients
                         }
                         
                         facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, categoryFacet.RefinementOption);
-                        facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
-                        
+
+                        if (facetItem.Refinement != string.Empty)
+                        {
+                            facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                        }
+                        else
+                        {
+                            facetItem.Link = string.Empty;
+                        }
+
                         refinement.Items.Add(facetItem);
                     }
                 }
@@ -607,7 +633,8 @@ namespace MissionSearch.Clients
 
             var rangeFacets = request.Facets.OfType<NumRangeFacet>().ToList();
             var dateFacets = request.Facets.OfType<DateRangeFacet>().ToList();
-                        
+
+            
             // load facet query fields
             foreach (var query in facetResponse.facet_queries)
             {
@@ -652,6 +679,7 @@ namespace MissionSearch.Clients
 
                     var facetItem = new RefinementItem()
                     {
+                        Id = string.Format("{0}", ++itemCnt), 
                         Name = propName,
                         GroupLabel = refinement.Label,
                         DisplayName = string.Format("{0}{1}", start.ToString(format),  Math.Abs(end) < 0.0 ? " or more " : " - " + end.ToString(format)),
@@ -666,7 +694,15 @@ namespace MissionSearch.Clients
                     }
                     
                     facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, rangeFacet.RefinementOption);
-                    facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                    
+                    if (facetItem.Refinement != string.Empty)
+                    {
+                        facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                    }
+                    else
+                    {
+                        facetItem.Link = string.Empty;
+                    }
 
                     if (refinement != null) refinement.Items.Add(facetItem);
                 }
@@ -707,6 +743,7 @@ namespace MissionSearch.Clients
 
                     var facetItem = new RefinementItem()
                     {
+                        Id = string.Format("{0}", ++itemCnt), 
                         Name = propName,
                         GroupLabel = refinement.Label,
                         DisplayName = label,
@@ -721,7 +758,15 @@ namespace MissionSearch.Clients
                     }
                     
                     facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, dateFacet.RefinementOption);
-                    facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+
+                    if (facetItem.Refinement != string.Empty)
+                    {
+                        facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                    }
+                    else
+                    {
+                        facetItem.Link = string.Empty;
+                    }
 
                     if (refinement != null) refinement.Items.Add(facetItem);
                 }

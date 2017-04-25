@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MissionSearch.Clients
+namespace MissionSearch.LuceneClient
 {
     public class LuceneMapper<T> where T : ISearchDocument
     {

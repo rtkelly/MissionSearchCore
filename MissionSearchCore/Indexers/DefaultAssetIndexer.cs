@@ -17,6 +17,14 @@ namespace MissionSearch.Indexers
 
         int SourceId;
 
+        public DefaultAssetIndexer(int threshold, int sourceId)
+        {
+            SearchClient = SearchFactory<T>.SearchClient;
+            _logger = SearchFactory.Logger;
+            Threshold = threshold;
+            SourceId = sourceId;
+        }
+
         /// <summary>
         /// 
         /// </summary>

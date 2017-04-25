@@ -55,8 +55,9 @@ namespace MissionSearch.Search.Refinements
 
                     if (likeRefinement != null)
                     {
-                        var rawValues = likeRefinement.Value.Replace("(", "").Replace(")", "");
-
+                        //var rawValues = likeRefinement.Value.Replace("(", "").Replace(")", "");
+                        var rawValues = likeRefinement.Value.StartsWith("(") ? likeRefinement.Value.Substring(1, likeRefinement.Value.Length - 2) : likeRefinement.Value;
+                        
                         var values = Regex.Split(rawValues, " OR ");
 
                         var valueStr = string.Join(" OR ", values.Where(v => v != refinement.Value));
@@ -72,13 +73,11 @@ namespace MissionSearch.Search.Refinements
 
                         decodedCurrentRefinements = string.Join(",", currentRefinements.Where(p => !p.Contains(refinement.GroupLabel)));
 
-                        return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
+                        //return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
                     }
 
-                    return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-                //return StringEncoder.EncodeString(refinementStr);
-
-
+                    //return (string.IsNullOrEmpty(decodedCurrentRefinements)) ? refinementStr : StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
+                    break;
                 default:
 
                     if (decodedCurrentRefinements.Contains(refinementStr))
@@ -89,8 +88,9 @@ namespace MissionSearch.Search.Refinements
                     break;
             }
 
-            return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
-
+            //return StringEncoder.EncodeString(string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
+            return StringEncoder.EncodeString(string.IsNullOrEmpty(decodedCurrentRefinements) ? refinementStr : string.Format("{0},{1}", decodedCurrentRefinements, refinementStr));
+                    
 
 
         }

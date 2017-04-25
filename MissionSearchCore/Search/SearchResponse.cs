@@ -22,7 +22,7 @@ namespace MissionSearch
 
         public int PageSize { get; set; }
 
-        internal int CurrentPage { get; set; }
+        public int CurrentPage { get; set; }
 
         public int TotalFound { get; set; }
 

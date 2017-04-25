@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MissionSearch.Clients;
 using MissionSearch;
 using System.Linq;
+using MissionSearch.LuceneClient;
 
 namespace UnitTestProject
 {
@@ -11,6 +12,7 @@ namespace UnitTestProject
     {
         string IndexPath = @"c:\testindex";
 
+        
         [TestMethod]
         public void TestPostDocument()
         {
@@ -69,6 +71,7 @@ namespace UnitTestProject
                 var title = row.EPISERVER_SEARCH_TITLE;
             }
         }
+         
     }
     
 }

@@ -47,7 +47,7 @@ namespace MissionSearch.Util
             }
             catch(Exception ex)
             {
-                _logger.Debug(ex.Message);
+                _logger.Error(ex.Message);
                 return string.Empty;
             }
         }
@@ -102,7 +102,7 @@ namespace MissionSearch.Util
             }
             catch(Exception ex)
             {
-                _logger.Debug(ex.Message);
+                _logger.Error(ex.Message);
                 return null;
             }
         }
@@ -247,7 +247,7 @@ namespace MissionSearch.Util
             }
             catch(Exception ex)
             {
-                _logger.Debug(ex.Message);
+                _logger.Error(ex.Message);
             }
 
             return "";

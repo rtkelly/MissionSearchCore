@@ -17,6 +17,19 @@ namespace MissionSearch.Indexers
         /// </summary>
         /// <param name="srchClient"></param>
         /// <param name="sourceId"></param>
+        public DefaultContentIndexer(int sourceId)
+        {
+            SearchClient = SearchFactory<T>.SearchClient;
+            SourceId = sourceId;
+
+            _logger = SearchFactory.Logger;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="srchClient"></param>
+        /// <param name="sourceId"></param>
         public DefaultContentIndexer(ISearchClient<T> srchClient, int sourceId)
         {
             if (srchClient == null)
