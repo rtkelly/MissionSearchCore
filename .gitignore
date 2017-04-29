@@ -189,7 +189,6 @@ _Pvt_Extensions/
 ModelManifest.xml
 
 MissionSearchCore.v12.suo
-MissionSearchCore/bin/
-MissionSearchCore/obj/
-MissionSearchCore/obj/Debug
-MissionSearchCore/bin/Debug
+bin/
+obj/
+packages/
