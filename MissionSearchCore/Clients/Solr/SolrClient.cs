@@ -329,7 +329,9 @@ namespace MissionSearch.Clients
             }
 
             var httpRequest = (HttpWebRequest)WebRequest.Create(srchResponse.QueryString);
-             
+
+            if (Timeout > 0) httpRequest.Timeout = Timeout;
+
             using (var webResponse = (HttpWebResponse)httpRequest.GetResponse())
             {
                 using (var webStream = webResponse.GetResponseStream())
@@ -375,7 +377,7 @@ namespace MissionSearch.Clients
                     QueryOptions = request.QueryOptions,
                     QueryText = request.QueryText,
                     Facets = new List<IFacet>() { facet },
-                    Refinements = StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => !p.Contains(facet.FieldLabel)))),
+                    Refinements = StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => !p.Contains(facet.FieldName)))),
                 };
 
                 var response2 = BaseSearch(request2);
@@ -536,7 +538,7 @@ namespace MissionSearch.Clients
                         var queryParm = new FilterQuery(refinement.Name, item);
                         var index = itemValues.IndexOf(item);
 
-                        var facetItem = new RefinementItem()
+                        var refinementItem = new RefinementItem()
                         {
                             Id = string.Format("{0}", ++itemCnt), 
                             Name = refinement.Name,
@@ -551,19 +553,22 @@ namespace MissionSearch.Clients
                         {
                             fieldFacet.RefinementOption = request.RefinementType.Value;
                         }
-                        
-                        facetItem.Refinement = RefinementBuilder.AddRemoveRefinement(facetItem, request.Refinements, fieldFacet.RefinementOption);
 
-                        if (facetItem.Refinement != string.Empty)
+                        var refinementStr = string.Format("{0};{1};{2}", refinementItem.Name, refinementItem.Value, refinementItem.GroupLabel);
+
+
+                        refinementItem.Refinement = RefinementBuilder.AddRemoveRefinement(refinementItem, request.Refinements, fieldFacet.RefinementOption);
+
+                        if (refinementItem.Refinement != string.Empty)
                         {
-                            facetItem.Link = string.Format("&ref={0}", facetItem.Refinement);
+                            refinementItem.Link = string.Format("&ref={0}", refinementItem.Refinement);
                         }
                         else
                         {
-                            facetItem.Link = string.Empty;
+                            refinementItem.Link = string.Empty;
                         }
 
-                        refinement.Items.Add(facetItem);
+                        refinement.Items.Add(refinementItem);
                      }
 
                     refinement.Items = SortRefinementItems(refinement, fieldFacet.Sort);

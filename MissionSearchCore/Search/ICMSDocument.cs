@@ -27,6 +27,9 @@ namespace MissionSearch
         string pagetype { get; set; }
 
         DateTime lastcrawled { get; set; }
-                
+
+        DateTime publisheddate { get; set; }
+
+        string author { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Indexers
 {
-
+    // to do rename to crawlercontentmap
     public class CrawlerContent
     {
         public string Name { get; set; }

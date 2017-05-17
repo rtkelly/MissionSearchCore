@@ -27,8 +27,8 @@ namespace MissionSearch.Util
                     return str;
                 
                 //return Zip(str);
-                //return WebUtility.UrlEncode(str);
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
+                return WebUtility.UrlEncode(str);
+                //return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
             }
             catch
             {
@@ -59,8 +59,8 @@ namespace MissionSearch.Util
                     return str;
 
                 //return Unzip(str);
-                //return WebUtility.UrlDecode(str);
-                return Encoding.UTF8.GetString(Convert.FromBase64String(str));
+                return WebUtility.UrlDecode(str);
+                //return Encoding.UTF8.GetString(Convert.FromBase64String(str));
             }
             catch
             {
