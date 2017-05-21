@@ -356,10 +356,11 @@ namespace MissionSearch.Clients
             {
                 foreach (var gap in facet.Range)
                 {
-                    if(gap.Lower == null)
-                        continue;
-                    
-                    var lower = gap.Lower.Value;
+                    //if (gap.Lower == null)
+                    //{
+                    //    continue;
+                    //}
+                    var lower = gap.Lower == null ? "*" : gap.Lower.Value.ToString(CultureInfo.InvariantCulture);
                     var upper = gap.Upper == null ? "*" : gap.Upper.Value.ToString(CultureInfo.InvariantCulture);
                     
                     facets.Add(string.Format("&facet.query={0}:[{1}+TO+{2}]", facet.FieldName, lower, upper)); 

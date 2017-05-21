@@ -377,7 +377,7 @@ namespace MissionSearch.Clients
                     QueryOptions = request.QueryOptions,
                     QueryText = request.QueryText,
                     Facets = new List<IFacet>() { facet },
-                    Refinements = StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => !p.Contains(facet.FieldName)))),
+                    Refinements = StringEncoder.EncodeString(string.Join(",", currentRefinements.Where(p => !p.Contains(facet.FieldLabel)))),
                 };
 
                 var response2 = BaseSearch(request2);
