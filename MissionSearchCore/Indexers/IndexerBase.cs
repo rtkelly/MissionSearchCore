@@ -10,23 +10,30 @@ using System.Web;
 
 namespace MissionSearch.Indexers
 {
-    public abstract class IndexerBase<T> where T : ISearchDocument
+    public abstract class IndexerBase
     {
         protected ILogger _logger { get; set; }
 
+        protected int _sourceId { get; set; }
+        
         protected void LogError(string message)
         {
-            if(_logger != null)
+            if (_logger != null)
                 _logger.Error(message);
         }
 
         protected void LogWarning(string message)
         {
-            if(_logger != null)
+            if (_logger != null)
                 _logger.Warn(message);
         }
 
 
+    }
+
+    public abstract class IndexerBase<T> : IndexerBase  where T : ISearchDocument
+    {
+        
         /// <summary>
         /// 
         /// </summary>

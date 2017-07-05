@@ -6,21 +6,20 @@ using System.Collections.Generic;
 
 namespace MissionSearch.Indexers
 {
+    
     public class DefaultContentIndexer<T> : IndexerBase<T>, IContentIndexer<T> where T : ISearchDocument 
     {
         public ISearchClient<T> SearchClient { get; set; }
-
-        int SourceId;
-
+        
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="srchClient"></param>
         /// <param name="sourceId"></param>
         public DefaultContentIndexer(int sourceId)
         {
             SearchClient = SearchFactory<T>.SearchClient;
-            SourceId = sourceId;
+            
+            _sourceId = sourceId;
 
             _logger = SearchFactory.Logger;
         }
@@ -36,7 +35,7 @@ namespace MissionSearch.Indexers
                 throw new NotImplementedException("Solr Client not implemented");
 
             SearchClient = srchClient;
-            SourceId = sourceId; 
+            _sourceId = sourceId; 
 
             _logger = SearchFactory.Logger;
         }
@@ -53,7 +52,7 @@ namespace MissionSearch.Indexers
                 throw new NotImplementedException("Solr Client not implemented");
 
             SearchClient = srchClient;
-            SourceId = sourceId;
+            _sourceId = sourceId;
 
             _logger = logger;
         }
@@ -134,26 +133,26 @@ namespace MissionSearch.Indexers
                 ErrorCnt = 0
             };
             
-            int cnt = 0;
+            var cnt = 0;
             
             if (contentItems == null)
                 return results;
 
-            foreach(var parameters in contentItems)
+            foreach(var contentItem in contentItems)
             {
                 try
                 {
-                    if (parameters.ContentItem.NotSearchable)
+                    if (contentItem.ContentItem.NotSearchable)
                     {
-                        if(SearchClient.Search("id:" + parameters.ContentItem._ContentID + " AND sourceid:" + SourceId.ToString()).Results.Any())
+                        if(SearchClient.Search("id:" + contentItem.ContentItem._ContentID + " AND sourceid:" + _sourceId.ToString()).Results.Any())
                         {
-                            SearchClient.Delete("id:" + parameters.ContentItem._ContentID);
+                            SearchClient.Delete("id:" + contentItem.ContentItem._ContentID);
                             results.DeleteCnt++;
                         }
                         continue;
                     }
-                   
-                    var doc = CreateSearchDoc(parameters);
+
+                    var doc = CreateSearchDoc(contentItem);
 
                     if (doc == null)
                         throw new Exception("error creating solr document");
@@ -162,7 +161,7 @@ namespace MissionSearch.Indexers
 
                     if (indexerCallback != null)
                     {
-                        doc = indexerCallback(doc, parameters.ContentItem);
+                        doc = indexerCallback(doc, contentItem.ContentItem);
                     }
 
                     SearchClient.Post(doc);
@@ -185,7 +184,7 @@ namespace MissionSearch.Indexers
                 }
                 catch(Exception ex)
                 {
-                    LogError(string.Format("Indexing failed for \"{0}\". {1} {2}", parameters.ContentItem.Name, ex.Message, ex.StackTrace));
+                    LogError(string.Format("Indexing failed for \"{0}\". {1} {2}", contentItem.ContentItem.Name, ex.Message, ex.StackTrace));
                     results.ErrorCnt++;
                 }
             }
@@ -206,7 +205,7 @@ namespace MissionSearch.Indexers
         /// <param name="contentItems"></param>
         private int PurgeDeletedDocuments(IEnumerable<ISearchableContent> contentItems)
         {
-            var indexedPages = SearchClient.GetAll("sourceid:" + SourceId);
+            var indexedPages = SearchClient.GetAll("sourceid:" + _sourceId);
             
             var notFound = indexedPages
                                 .Where(p => contentItems.All(pg => pg._ContentID != p.id))
@@ -282,6 +281,8 @@ namespace MissionSearch.Indexers
             SearchClient.DeleteById(contentItem._ContentID);
         }
 
+        
+         
 
         /// <summary>
         /// 
@@ -295,27 +296,22 @@ namespace MissionSearch.Indexers
 
             var doc = (T)Activator.CreateInstance(typeof(T), new object[] { });
 
-            doc.sourceid = SourceId;
+            doc.sourceid = _sourceId;
 
             var docProps = doc.GetType().GetProperties();
 
             if (contentItem.ContentItem != null)
             {
                 doc.id = contentItem.ContentItem._ContentID;
-                //doc.title = contentItem.ContentItem.Name;
                 
                 var contentBaseTypes = ReflectionUtil.GetBaseTypes(contentItem.ContentItem);
-
-                //contentBaseTypes.Add(contentItem.GetType());
-
+                
                 foreach (var bType in contentBaseTypes)
                 {
                     GetBaseProperties(contentItem.ContentItem, doc, docProps, bType);
                 }
             }
             
-            //var contentCrawlProps = contentItem.CrawlProperties as ContentCrawlParameters;
-
             if (contentItem.Content != null && contentItem.Content.Any())
             {
                 foreach (var crawlPropContent in contentItem.Content)
@@ -338,5 +334,7 @@ namespace MissionSearch.Indexers
         
 
         
+    
+      
     }
 }

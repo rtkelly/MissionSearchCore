@@ -13,37 +13,32 @@ namespace MissionSearch.Clients
         void Delete(string query);
 
         SearchResponse Search(SearchRequest request);
-    }
 
-    public interface ISearchClient<T> : ISearchClient where T : ISearchDocument 
-    {
-        //string SrchConnStr { get;  }
-
-        new SearchResponse<T> Search(SearchRequest request);
-        
-        SearchResponse<T> Search(string queryText);
-
-        List<T> GetAll(string queryText);
+        List<string> GetTerms(string fieldName, string term);
 
         string FileExtract(byte[] fileBytes);
 
-        //T Extract(T doc, byte[] fileBytes);
-        
-        void Post(T doc);
-
-        //void Post(string jsonDoc);
-        
-        void DeleteById(string id);
-
-        List<string> GetTerms(string fieldName, string term);
-            
-        //void PostInit();
-        
         void Commit();
 
         void Close();
 
+        void DeleteById(string id);
+
         void Reload();
+
+        List<dynamic> GetAll(string queryText);
+    }
+
+    public interface ISearchClient<T> : ISearchClient where T : ISearchDocument 
+    {
+        new SearchResponse<T> Search(SearchRequest request);
+        
+        SearchResponse<T> Search(string queryText);
+
+        new List<T> GetAll(string queryText);
+        
+        void Post(T doc);
+        
         
         //List<string> GetSynonyms();
 

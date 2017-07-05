@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace MissionSearch.Util
@@ -73,7 +72,7 @@ namespace MissionSearch.Util
 
             foreach(var str in strList)
             {
-                int val=0;
+                int val;
 
                 if (int.TryParse(str, out val))
                     list.Add(val);

@@ -112,7 +112,7 @@ namespace MissionSearch.Clients
                 return "";
 
             var filterEqualQueries = queryOptions
-                            .OfType<FilterQuery>()
+                            //.OfType<FilterQuery>()
                             .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Equals)
                             .Select(qp => string.Format("&fq={0}:{1}", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
 
@@ -122,10 +122,11 @@ namespace MissionSearch.Clients
             return str.ToString();
 
         }
+       
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="queryOptions"></param>
         /// <returns></returns>
         private static string AppendQueryOptions(List<IQueryOption> queryOptions)
         {

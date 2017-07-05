@@ -7,7 +7,6 @@ using System.Net;
 using System.Text;
 using MissionSearch.Util;
 using System.Text.RegularExpressions;
-using System.Web;
 using MissionSearch.Search.Facets;
 using MissionSearch.Search.Refinements;
 
@@ -126,6 +125,152 @@ namespace MissionSearch.Clients
 
             return srchResponse;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <param name="term"></param>
+        /// <returns></returns>
+        public List<string> GetTerms(string fieldName, string term)
+        {
+
+            var EndPointGetResources = string.IsNullOrEmpty(term) ?
+                string.Format("{0}/terms?wt=json&terms.fl={1}", SrchConnStr, fieldName) :
+                string.Format("{0}/terms?wt=json&terms.fl={1}&terms.sort=index&terms.lower={2}", SrchConnStr, fieldName, term);
+
+            var json = HttpClient.GetRequest(EndPointGetResources);
+
+            var resourceContainer = JsonConvert.DeserializeObject<SolrTermsContainer>(json, new JsonSerializerSettings()
+            {
+                MissingMemberHandling = MissingMemberHandling.Ignore,
+
+            });
+
+            return resourceContainer.terms[fieldName];
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fileBytes"></param>
+        /// <returns></returns>
+        public string FileExtract(byte[] fileBytes)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(EndPointExtractOnly);
+
+            request.Method = "Post";
+            request.KeepAlive = true;
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+            request.ContentLength = fileBytes.Length;
+
+            using (var requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(fileBytes, 0, fileBytes.Length);
+                requestStream.Close();
+
+                var webResp = (HttpWebResponse)request.GetResponse();
+                var webStream = webResp.GetResponseStream();
+
+                if (webStream == null)
+                    return string.Empty;
+
+                using (var rdr = new StreamReader(webStream))
+                {
+                    var responseXml = rdr.ReadToEnd();
+                    return responseXml;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cleanup proccess for after processing posts
+        /// </summary>
+        public void Commit()
+        {
+            var request = (HttpWebRequest)WebRequest.Create(EndPointCommit);
+            using (request.GetResponse())
+            {
+            }
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Close()
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Reload()
+        {
+            var index = SrchConnStr.LastIndexOf("/", StringComparison.Ordinal) + 1;
+            var coreName = SrchConnStr.Substring(index, SrchConnStr.Length - index);
+            var solrUrl = SrchConnStr.Substring(0, index);
+
+            var EndPointGetResources = string.Format("{0}admin/cores?action=RELOAD&core={1}", solrUrl, coreName);
+
+            HttpClient.CallWebRequest(EndPointGetResources);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        public void DeleteById(string id)
+        {
+            try
+            {
+                var url = string.Format(EndPointDeleteById, id);
+                var httpRequest = (HttpWebRequest)WebRequest.Create(url);
+
+                httpRequest.GetResponse();
+            }
+            catch (Exception ex)
+            {
+
+                // TO DO: handle exception
+            }
+
+        }
+
+
+        public List<dynamic> GetAll(string q)
+        {
+            var indexedPages = new List<dynamic>();
+
+            var response = Search(new SearchRequest()
+            {
+                QueryText = q,
+                PageSize = 500,
+            });
+
+            if (response.Results.Any())
+                indexedPages.AddRange(response.Results);
+
+            for (int page = 2; page <= response.PagingInfo.TotalPages; page++)
+            {
+                response = Search(new SearchRequest()
+                {
+                    QueryText = q,
+                    CurrentPage = page,
+                    PageSize = 500,
+                });
+
+                if (response.Results.Any())
+                    indexedPages.AddRange(response.Results);
+            }
+
+            return indexedPages;
+        }
+
+        
+
     }
     
     public class SolrClient<T> : SolrClient, ISearchClient<T> where T : ISearchDocument 
@@ -181,39 +326,7 @@ namespace MissionSearch.Clients
         }
        
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="fileBytes"></param>
-        /// <returns></returns>
-        public string FileExtract(byte[] fileBytes)
-        {
-            var request = (HttpWebRequest)WebRequest.Create(EndPointExtractOnly);
-
-            request.Method = "Post";
-            request.KeepAlive = true;
-            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            request.ContentLength = fileBytes.Length;
-
-            using (var requestStream = request.GetRequestStream())
-            {
-                requestStream.Write(fileBytes, 0, fileBytes.Length);
-                requestStream.Close();
-
-                var webResp = (HttpWebResponse)request.GetResponse();
-                var webStream = webResp.GetResponseStream();
-
-                if (webStream == null)
-                    return string.Empty;
-
-                using (var rdr = new StreamReader(webStream))
-                {
-                    var responseXml = rdr.ReadToEnd();
-                    return responseXml;
-                }
-            }
-        }
-
+       
 
         /// <summary>
         /// 
@@ -278,7 +391,7 @@ namespace MissionSearch.Clients
                     UpdateFacetCounts(request, srchResponse);
                 }
 
-                srchResponse.Refinements.ForEach(r => r.Items = r.Items.Where(i => i.Count > 0 || i.Selected == true).ToList());
+                srchResponse.Refinements.ForEach(r => r.Items = r.Items.Where(i => i.Count > 0 || i.Selected).ToList());
                 srchResponse.Refinements.RemoveAll(r => r.Items.Count == 0);
             
                 foreach (var facet in request.Facets)
@@ -431,41 +544,9 @@ namespace MissionSearch.Clients
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="id"></param>
-        public void DeleteById(string id)
-        {
-            try
-            {
-                var url = string.Format(EndPointDeleteById, id);
-                var httpRequest = (HttpWebRequest)WebRequest.Create(url);
-
-                httpRequest.GetResponse();
-            }
-            catch(Exception ex)
-            {
-                // TO DO: handle exception
-            }
-
-        }
-
         
 
-
-        /// <summary>
-        /// Cleanup proccess for after processing posts
-        /// </summary>
-        public void Commit()
-        {
-            var request = (HttpWebRequest)WebRequest.Create(EndPointCommit);
-            using(var response = request.GetResponse())
-            {
-
-            }
-        }
-
+       
 
         /// <summary>
         /// Intialization proccess required before processing posts
@@ -535,7 +616,7 @@ namespace MissionSearch.Clients
                     
                     foreach(var item in itemValues)
                     {
-                        var queryParm = new FilterQuery(refinement.Name, item);
+                        //var queryParm = new FilterQuery(refinement.Name, item);
                         var index = itemValues.IndexOf(item);
 
                         var refinementItem = new RefinementItem()
@@ -554,9 +635,8 @@ namespace MissionSearch.Clients
                             fieldFacet.RefinementOption = request.RefinementType.Value;
                         }
 
-                        var refinementStr = string.Format("{0};{1};{2}", refinementItem.Name, refinementItem.Value, refinementItem.GroupLabel);
-
-
+                        //var refinementStr = string.Format("{0};{1};{2}", refinementItem.Name, refinementItem.Value, refinementItem.GroupLabel);
+                        
                         refinementItem.Refinement = RefinementBuilder.AddRemoveRefinement(refinementItem, request.Refinements, fieldFacet.RefinementOption);
 
                         if (refinementItem.Refinement != string.Empty)
@@ -597,7 +677,6 @@ namespace MissionSearch.Clients
                     if (item == categoryFacet.CategoryName)
                         continue;
 
-                    var queryParm = new FilterQuery(refinement.Name, item);
                     var index = itemValues.IndexOf(item);
 
                     if (item == categoryFacet.CategoryName || item.Contains(categoryPath))
@@ -647,9 +726,7 @@ namespace MissionSearch.Clients
                 var index = query.Key.IndexOf(':');
                 var propName = query.Key.Substring(0, index);
                 var propValue = query.Key.Substring(index+1, query.Key.Length-index-1);
-
-                var queryParm = new FilterQuery(propName, propValue);
-
+                
                 var rangeFacet = rangeFacets.FirstOrDefault(f => f.FieldName == propName);
                 var dateFacet = dateFacets.FirstOrDefault(f => f.FieldName == propName);
 
@@ -725,7 +802,7 @@ namespace MissionSearch.Clients
 
                     var refinement = refinements.FirstOrDefault(r => r.Name == propName);
                     
-                    var label = "";
+                    string label;
 
                     if (start == null && end != null)
                     {
@@ -785,52 +862,10 @@ namespace MissionSearch.Clients
         }
 
                   
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="fieldName"></param>
-        /// <param name="term"></param>
-        /// <returns></returns>
-        public List<string> GetTerms(string fieldName, string term)
-        {
+        
 
-            var EndPointGetResources = string.IsNullOrEmpty(term) ? 
-                string.Format("{0}/terms?wt=json&terms.fl={1}", SrchConnStr, fieldName) :
-                string.Format("{0}/terms?wt=json&terms.fl={1}&terms.sort=index&terms.lower={2}", SrchConnStr, fieldName, term);
 
-            var json = HttpClient.GetRequest(EndPointGetResources);
-
-            var resourceContainer = JsonConvert.DeserializeObject<SolrTermsContainer>(json, new JsonSerializerSettings()
-            {
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-
-            });
-
-            return resourceContainer.terms[fieldName];
-
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Close()
-        {
-
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Reload()
-        {
-            var index = SrchConnStr.LastIndexOf("/", StringComparison.Ordinal) + 1;
-            var coreName = SrchConnStr.Substring(index, SrchConnStr.Length - index);
-            var solrUrl = SrchConnStr.Substring(0, index);
-
-            var EndPointGetResources = string.Format("{0}admin/cores?action=RELOAD&core={1}", solrUrl, coreName);
-
-            HttpClient.CallWebRequest(EndPointGetResources);
-        }
+        
 
         /// <summary>
         /// 

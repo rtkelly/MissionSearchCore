@@ -147,26 +147,26 @@ namespace MissionSearch.LuceneClient
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="searcher"></param>
         /// <param name="request"></param>
         /// <returns></returns>
         protected Query BuildQuery(IndexSearcher searcher, SearchRequest request)
         {
             var analyzer = new StandardAnalyzer(LuceneVer);
-
+            
+            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
+            
             var mainQuery = new StringBuilder();
             mainQuery.Append("+" + request.QueryText);
 
-            var filters = LoadFilters(request);
+            var filters = QueryParser.Escape(LoadFilters(request));
 
             if (!string.IsNullOrEmpty(filters))
             {
                 mainQuery.Append(filters);
             }
-
-            var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
             
             var query = parser.Parse(mainQuery.ToString());
-
 
             return query;
         }
@@ -186,7 +186,7 @@ namespace MissionSearch.LuceneClient
 
                 foreach (var sort in request.Sort)
                 {
-                    var order = (sort.Order == SortOrder.SortOption.Ascending) ? false : true;
+                    var order = (sort.Order != SortOrder.SortOption.Ascending);
 
                     sorts.Add(new SortField(sort.SortField, SortField.STRING, order));
                 }
@@ -269,11 +269,13 @@ namespace MissionSearch.LuceneClient
             return filters.ToString();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
+       /// <summary>
+       /// 
+       /// </summary>
+       /// <param name="searcher"></param>
+       /// <param name="request"></param>
+       /// <param name="query"></param>
+       /// <returns></returns>
         protected List<Refinement> LoadRefinements(IndexSearcher searcher, SearchRequest request, Query query)
         {
             var refinements = new List<Refinement>();
@@ -302,6 +304,7 @@ namespace MissionSearch.LuceneClient
                     var item = new RefinementItem()
                     {
                         Name = refinement.Name,
+                        GroupLabel = refinement.Label,
                         DisplayName = hit.Name.ToString(),
                         Count = hit.HitCount,
                         Value = hit.Name.ToString(),
@@ -318,6 +321,14 @@ namespace MissionSearch.LuceneClient
                 refinement.Items = refinement.Items.OrderByDescending(p => p.Count).ToList();
             }
 
+            foreach(var facet in request.Facets.OfType<CategoryFacet>())
+            {
+                var refinement = refinements.FirstOrDefault(r => r.Label == facet.FieldLabel);
+
+
+
+            }
+
             return refinements; 
         }
 
@@ -327,7 +338,7 @@ namespace MissionSearch.LuceneClient
         public void Commit()
         {
             //if (_Writer != null)
-           /// {
+           // {
             //    Writer.Commit();
            // }
         }
@@ -397,6 +408,18 @@ namespace MissionSearch.LuceneClient
             throw new NotImplementedException();
         }
 
+
+
+        public string FileExtract(byte[] fileBytes)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public List<dynamic> GetAll(string queryText)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class LuceneClient<T> : LuceneClient, ISearchClient<T> where T : ISearchDocument 
@@ -546,11 +569,85 @@ namespace MissionSearch.LuceneClient
         {
             throw new NotImplementedException();
         }
-      
 
 
 
 
-        
+
+
+
+        SearchResponse<T> ISearchClient<T>.Search(SearchRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        SearchResponse<T> ISearchClient<T>.Search(string queryText)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<T> ISearchClient<T>.GetAll(string queryText)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient<T>.Post(T doc)
+        {
+            throw new NotImplementedException();
+        }
+
+        int ISearchClient.Timeout { get; set; }
+
+        string ISearchClient.SrchConnStr { get { throw new NotImplementedException(); } }
+
+        void ISearchClient.Post(string jsonDoc)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient.Delete(string query)
+        {
+            throw new NotImplementedException();
+        }
+
+        SearchResponse ISearchClient.Search(SearchRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<string> ISearchClient.GetTerms(string fieldName, string term)
+        {
+            throw new NotImplementedException();
+        }
+
+        string ISearchClient.FileExtract(byte[] fileBytes)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient.Commit()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient.Close()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient.DeleteById(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ISearchClient.Reload()
+        {
+            throw new NotImplementedException();
+        }
+
+        List<dynamic> ISearchClient.GetAll(string queryText)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

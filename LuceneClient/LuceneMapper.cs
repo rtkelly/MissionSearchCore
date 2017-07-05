@@ -58,7 +58,7 @@ namespace MissionSearch.LuceneClient
                                     
                                     var list = propValue as List<string>;
 
-                                    foreach (var value in list)
+                                    foreach (var value in list ?? new List<string>())
                                     {
                                         luceneDoc.Add(new Field(property.Name, value, Field.Store.YES, Field.Index.ANALYZED));
                                     }

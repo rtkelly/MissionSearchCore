@@ -55,7 +55,11 @@ namespace MissionSearch
     {
         public double? Lower { get; set; }
         public double? Upper { get; set; }
-        
+
+        public NumRange()
+        {
+        }
+
         public NumRange(double? lower, double? upper)
         {
             Lower = lower;

@@ -14,15 +14,13 @@ namespace MissionSearch.Indexers
         ISearchClient<T> SearchClient { get; set; }
 
         int Threshold; // max file size in bytes
-
-        int SourceId;
-
+        
         public DefaultAssetIndexer(int threshold, int sourceId)
         {
             SearchClient = SearchFactory<T>.SearchClient;
             _logger = SearchFactory.Logger;
             Threshold = threshold;
-            SourceId = sourceId;
+            _sourceId = sourceId;
         }
 
         /// <summary>
@@ -38,7 +36,7 @@ namespace MissionSearch.Indexers
 
             SearchClient = srchClient;
             Threshold = threshold;
-            SourceId = sourceId;
+            _sourceId = sourceId;
 
             _logger = SearchFactory.Logger;
                         
@@ -193,7 +191,7 @@ namespace MissionSearch.Indexers
 
             doc.id = parameters.ContentItem._ContentID;
             //doc.title = parameters.ContentItem.Name;
-            doc.sourceid = SourceId;
+            doc.sourceid = _sourceId;
 
             var docProps = doc.GetType().GetProperties();
                         
@@ -283,7 +281,7 @@ namespace MissionSearch.Indexers
         /// <returns></returns>
         public int PurgeDeletedDocuments(IEnumerable<ISearchableAsset> assets)
         {
-            var indexedAssets = SearchClient.Search("sourceid:" + SourceId).Results;
+            var indexedAssets = SearchClient.Search("sourceid:" + _sourceId).Results;
 
             var notFound = indexedAssets
                                 .Where(p => !assets.Any(pg => pg._ContentID == p.id))

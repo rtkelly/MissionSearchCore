@@ -31,7 +31,7 @@ namespace MissionSearch.LuceneClient
         {
             result = GetPropertyValue(binder.Name);
 
-            return result == null ? false : true;
+            return result != null;
         }
 
         /// <summary>

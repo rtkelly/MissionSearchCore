@@ -18,9 +18,7 @@ namespace MissionSearch.Indexers
         private Dictionary<string, object> CrawlSettings { get; set; }
 
         public List<CrawlerContent> Content { get; set; }
-
-        //public string ContentId { get; set; }
-
+        
         public ISearchableContent ContentItem { get; set; }
         
         public ContentCrawlParameters(Dictionary<string, object> settings=null)
@@ -28,30 +26,6 @@ namespace MissionSearch.Indexers
             CrawlSettings = settings;
             Content = new List<CrawlerContent>();
         }
-
-               
-
-        public bool EnablePageScrape
-        {
-            get
-            {
-                if (CrawlSettings == null)
-                    return false;
-
-                if (CrawlSettings.ContainsKey("EnablePageScrape"))
-                {
-                    if (CrawlSettings["EnablePageScrape"] is bool)
-                    {
-                        var b = CrawlSettings["EnablePageScrape"] as bool?;
-
-                        if (b == null)
-                            return false;
-
-                        return b.Value;
-                    }
-                }
-                return false;
-            }
-        }
+        
     }
 }
