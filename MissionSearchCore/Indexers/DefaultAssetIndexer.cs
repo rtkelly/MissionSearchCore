@@ -42,9 +42,9 @@ namespace MissionSearch.Indexers
                         
         }
 
-        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var items = assets as IList<ContentCrawlParameters> ?? assets.ToList();
+            var items = assets as IList<ContentCrawlProxy> ?? assets.ToList();
 
             var results = RunUpdate(items, statusCallback, indexerCallback);
 
@@ -61,7 +61,7 @@ namespace MissionSearch.Indexers
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
         /// <returns></returns>
-        public IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunUpdate(IEnumerable<ContentCrawlProxy> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
             var results = new IndexResults();
                         
@@ -130,7 +130,7 @@ namespace MissionSearch.Indexers
         /// <returns></returns>
         public T Update(ISearchableAsset asset)
         {
-            var parameters = new ContentCrawlParameters() { ContentItem = asset };
+            var parameters = new ContentCrawlProxy() { ContentItem = asset };
             var doc = CreateSearchDoc(parameters, null);
 
             SearchClient.Post(doc);
@@ -141,7 +141,7 @@ namespace MissionSearch.Indexers
         }
 
 
-        public T Update(ContentCrawlParameters parameters)
+        public T Update(ContentCrawlProxy parameters)
         {
             var doc = CreateSearchDoc(parameters, null);
 
@@ -185,7 +185,7 @@ namespace MissionSearch.Indexers
         /// <param name="parameters"></param>
         /// <param name="results"></param>
         /// <returns></returns>
-        private T CreateSearchDoc(ContentCrawlParameters parameters, IndexResults results)
+        private T CreateSearchDoc(ContentCrawlProxy parameters, IndexResults results)
         {
             var doc = (T)Activator.CreateInstance(typeof(T), new object[] { });
 
@@ -195,7 +195,7 @@ namespace MissionSearch.Indexers
 
             var docProps = doc.GetType().GetProperties();
                         
-            //var pageCrawlProps = parameters.CrawlProperties as ContentCrawlParameters;
+            //var pageCrawlProps = parameters.CrawlProperties as ContentCrawlProxy;
 
             // load crawl properties
             if (parameters.Content != null && parameters.Content.Any())

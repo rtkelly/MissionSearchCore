@@ -8,6 +8,6 @@ namespace MissionSearch.Crawlers
 {
     public interface ICrawler
     {
-
+        CrawlerResults Run();
     }
 }

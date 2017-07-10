@@ -8,5 +8,9 @@ namespace MissionSearch.Crawlers.FolderCrawler
 {
     public class FolderCrawler :ICrawler
     {
+        public CrawlerResults Run()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

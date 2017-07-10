@@ -67,7 +67,12 @@ namespace MissionSearch.Indexers
             return RunFullIndex(content, null, null);
         }
 
-        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> content)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> content)
         {
             return RunFullIndex(content, null, null);
         }
@@ -79,9 +84,9 @@ namespace MissionSearch.Indexers
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
         /// <returns></returns>
-        public IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> content, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> content, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var contentList = content as IList<ContentCrawlParameters> ?? content.ToList();
+            var contentList = content as IList<ContentCrawlProxy> ?? content.ToList();
             var contentItems = contentList.Select(c => c.ContentItem).ToList();
 
             var results = RunUpdate(contentList, statusCallback, indexerCallback);
@@ -101,7 +106,7 @@ namespace MissionSearch.Indexers
         public IndexResults RunFullIndex(IEnumerable<ISearchableContent> content, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
             var contentList = content as IList<ISearchableContent> ?? content.ToList();
-            var contentParamters = contentList.Select(c => new ContentCrawlParameters() { ContentItem = c }).ToList();
+            var contentParamters = contentList.Select(c => new ContentCrawlProxy() { ContentItem = c }).ToList();
             
             var results = RunUpdate(contentParamters, statusCallback, indexerCallback);
 
@@ -113,7 +118,7 @@ namespace MissionSearch.Indexers
        
         public IndexResults RunUpdate(IEnumerable<ISearchableContent> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
-            var parameters = contentItems.Select(c => new ContentCrawlParameters() { ContentItem = c });
+            var parameters = contentItems.Select(c => new ContentCrawlProxy() { ContentItem = c });
 
             return RunUpdate(parameters, statusCallback, indexerCallback);
         }
@@ -125,7 +130,7 @@ namespace MissionSearch.Indexers
         /// <param name="contentItems"></param>
         /// <param name="statusCallback"></param>
         /// <param name="indexerCallback"></param>
-        public IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
+        public IndexResults RunUpdate(IEnumerable<ContentCrawlProxy> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback)
         {
             var results = new IndexResults
             {
@@ -227,7 +232,7 @@ namespace MissionSearch.Indexers
         /// </summary>
         /// <param name="contentItem"></param>
         /// <returns></returns>
-        public T Update(ContentCrawlParameters contentItem)
+        public T Update(ContentCrawlProxy contentItem)
         {
             var doc = CreateSearchDoc(contentItem);
 
@@ -248,7 +253,7 @@ namespace MissionSearch.Indexers
 
         public T Update(ISearchableContent contentItem)
         {
-            return Update(new ContentCrawlParameters() { 
+            return Update(new ContentCrawlProxy() { 
                 ContentItem = contentItem 
             });
         }
@@ -289,7 +294,7 @@ namespace MissionSearch.Indexers
         /// </summary>
         /// <param name="contentItem"></param>
         /// <returns></returns>
-        private T CreateSearchDoc(ContentCrawlParameters contentItem)
+        private T CreateSearchDoc(ContentCrawlProxy contentItem)
         {
             if (contentItem == null)
                 return default(T);

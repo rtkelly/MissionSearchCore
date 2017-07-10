@@ -58,7 +58,7 @@ namespace MissionSearch.Indexers
         /// </summary>
         /// <param name="contentList"></param>
         /// <returns></returns>
-        public IndexResults RunFullIndex(List<ContentCrawlParameters> contentList)
+        public IndexResults RunFullIndex(List<ContentCrawlProxy> contentList)
         {
             var contentItems = contentList.Select(c => c.ContentItem).ToList();
 
@@ -74,7 +74,7 @@ namespace MissionSearch.Indexers
         /// </summary>
         /// <param name="contentItems"></param>
         /// <returns></returns>
-        public IndexResults RunUpdate(List<ContentCrawlParameters> contentItems)
+        public IndexResults RunUpdate(List<ContentCrawlProxy> contentItems)
         {
             var results = new IndexResults
             {
@@ -124,7 +124,7 @@ namespace MissionSearch.Indexers
         /// <param name="id"></param>
         /// <param name="crawlProperties"></param>
         /// <returns></returns>
-        public string CreateSearchJsonDoc(string id, ContentCrawlParameters crawlProperties)
+        public string CreateSearchJsonDoc(string id, ContentCrawlProxy crawlProperties)
         {
             if (crawlProperties == null)
                 return null;

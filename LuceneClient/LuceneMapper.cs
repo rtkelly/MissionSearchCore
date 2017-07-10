@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Documents;
+﻿using Lucene.Net.Analysis;
+using Lucene.Net.Documents;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,9 +47,39 @@ namespace MissionSearch.LuceneClient
                             key = propValue.ToString();
                             luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
                             break;
+                        
+                        case "categories":
+                            var categories = propValue as List<string>;
+
+                            
+                            foreach (var category in categories ?? new List<string>())
+                            {
+                                // to do: regex replace
+                                var categoryValue = category
+                                    .Replace("/", " ")
+                                    .Replace("(", "")
+                                    .Replace(")", "")
+                                    .ToLower();
+
+                                luceneDoc.Add(new Field(property.Name, categoryValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                                luceneDoc.Add(new Field("content", categoryValue, Field.Store.NO, Field.Index.ANALYZED));
+                            }
+                            break;
+                     
                         case "title":
-                            luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.ANALYZED));
-                            luceneDoc.Add(new Field(property.Name+"_sortable", propValue.ToString(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+                            var strValue = propValue.ToString();
+                            luceneDoc.Add(new Field(property.Name, strValue, Field.Store.YES, Field.Index.ANALYZED));
+                            luceneDoc.Add(new Field(property.Name + "_sortable", strValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                            luceneDoc.Add(new Field("content", strValue.ToLower(), Field.Store.NO, Field.Index.ANALYZED));
+                            break;
+
+                        case "content":
+                            var content = propValue as List<string>;
+
+                            foreach (var contentItem in content ?? new List<string>())
+                            {
+                                luceneDoc.Add(new Field(property.Name, contentItem.ToLower(), Field.Store.NO, Field.Index.ANALYZED));
+                            }
                             break;
 
                         default:
@@ -61,11 +92,13 @@ namespace MissionSearch.LuceneClient
                                     foreach (var value in list ?? new List<string>())
                                     {
                                         luceneDoc.Add(new Field(property.Name, value, Field.Store.YES, Field.Index.ANALYZED));
+                                        luceneDoc.Add(new Field("content", value.ToLower(), Field.Store.NO, Field.Index.ANALYZED));
                                     }
                                     break;
 
                                 default:
                                     luceneDoc.Add(new Field(property.Name, propValue.ToString(), Field.Store.YES, Field.Index.ANALYZED));
+                                    luceneDoc.Add(new Field("content", propValue.ToString().ToLower(), Field.Store.NO, Field.Index.ANALYZED));
                                     break;
                             }
 

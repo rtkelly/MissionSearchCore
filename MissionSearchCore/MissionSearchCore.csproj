@@ -97,7 +97,7 @@
     <Compile Include="Clients\Nutch\NutchClient.cs" />
     <Compile Include="Clients\Nutch\NutchJob.cs" />
     <Compile Include="Crawlers\FolderCrawler\FolderCrawler.cs" />
-    <Compile Include="Crawlers\WebCrawler\CrawlerResults.cs" />
+    <Compile Include="Crawlers\CrawlerResults.cs" />
     <Compile Include="Crawlers\ICrawler.cs" />
     <Compile Include="Crawlers\WebCrawler\IWebCrawlPage.cs" />
     <Compile Include="Crawlers\WebCrawler\PageExtractRequest.cs" />
@@ -106,7 +106,7 @@
     <Compile Include="Crawlers\WebCrawler\WebCrawlBasePage.cs" />
     <Compile Include="Crawlers\WebCrawler\WebCrawler.cs" />
     <Compile Include="Crawlers\WebCrawler\WebCrawlJob.cs" />
-    <Compile Include="Indexers\ContentCrawlParameters.cs" />
+    <Compile Include="Indexers\ContentCrawlProxy.cs" />
     <Compile Include="Indexers\ContentIndexer.cs" />
     <Compile Include="Indexers\ContentIndexRequest.cs" />
     <Compile Include="Logger\ILogger.cs" />

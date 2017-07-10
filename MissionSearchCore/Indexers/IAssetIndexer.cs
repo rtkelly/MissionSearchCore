@@ -11,11 +11,11 @@ namespace MissionSearch.Indexers
         //IndexResults RunFullIndex(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
         //IndexResults RunUpdate(IEnumerable<ISearchableAsset> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
 
-        IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
-        IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> assets, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        IndexResults RunUpdate(IEnumerable<ContentCrawlProxy> parameters, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
         
         T Update(ISearchableAsset asset);
-        T Update(ContentCrawlParameters asset);
+        T Update(ContentCrawlProxy asset);
         
         int Delete(IEnumerable<ISearchableAsset> assets);
         void Delete(ISearchableAsset asset);

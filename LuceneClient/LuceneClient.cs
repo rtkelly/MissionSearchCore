@@ -12,6 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MissionSearch.LuceneClient.CustomAnalyzer;
+using System.Text.RegularExpressions;
 
 namespace MissionSearch.LuceneClient
 {
@@ -48,15 +50,9 @@ namespace MissionSearch.LuceneClient
         {
             if (string.IsNullOrEmpty(srchConnectionString))
                 throw new NotImplementedException("Lucene Index undefined");
-
-            //if (srchConnectionString.StartsWith("/"))
-            //{
-                //_srchConnStr = HostingEnvironment.MapPath(srchConnectionString);
-           // }
-           // else
-           // {
-                _srchConnStr = srchConnectionString;
-           // }
+        
+            _srchConnStr = srchConnectionString;
+           
         }
 
         /// <summary>
@@ -83,9 +79,6 @@ namespace MissionSearch.LuceneClient
                 MissingMemberHandling = MissingMemberHandling.Ignore,
             });
             
-            // to do: remove lucene object mapper
-            // replace with json lucene doc mapper class
-
             var luceneDoc = doc.ToDocument();
 
             var key = new Term("id", doc.id);
@@ -152,14 +145,16 @@ namespace MissionSearch.LuceneClient
         /// <returns></returns>
         protected Query BuildQuery(IndexSearcher searcher, SearchRequest request)
         {
-            var analyzer = new StandardAnalyzer(LuceneVer);
+            //var analyzer = new StandardAnalyzer(LuceneVer);
+            var analyzer = new CustomStandardAnalyzer();
             
             var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
             
             var mainQuery = new StringBuilder();
             mainQuery.Append("+" + request.QueryText);
 
-            var filters = QueryParser.Escape(LoadFilters(request));
+            //var filters = QueryParser.Escape(LoadFilters(request));
+            var filters = LoadFilters(request);
 
             if (!string.IsNullOrEmpty(filters))
             {
@@ -167,7 +162,7 @@ namespace MissionSearch.LuceneClient
             }
             
             var query = parser.Parse(mainQuery.ToString());
-
+            
             return query;
         }
 
@@ -198,75 +193,39 @@ namespace MissionSearch.LuceneClient
             return sortOrder;
         }
          
-        /*
-        protected BooleanFilter LoadFilters(SearchRequest request)
-        {
-            var filters = new BooleanFilter();
-            var cnt = 0;
-
-            foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
-            {
-                if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
-                {
-                    var queryFilter = new QueryWrapperFilter(new TermQuery(new Term(filter.ParameterName, filter.FieldValue.ToString())));
-                    filters.Add(new FilterClause(queryFilter, Occur.MUST));
-                    cnt++;
-                }
-                else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
-                {
-                    var queryFilter = new QueryWrapperFilter(new WildcardQuery(new Term(filter.ParameterName, "*" + filter.FieldValue + "*")));
-                    filters.Add(new FilterClause(queryFilter, Occur.MUST));
-                    cnt++;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(request.Refinements))
-            {
-                var currentRefinements = QueryOptions.ParseRefinementString(request.Refinements);
-
-                foreach (var refinement in currentRefinements)
-                {
-                    var terms = new string[] { refinement.FieldValue.ToString() };
-
-                    filters.Add(new FilterClause(new FieldCacheTermsFilter(refinement.ParameterName, terms), Occur.MUST));
-                    cnt++;
-                }
-            }
-
-            if (cnt == 0)
-                filters = null;
-
-            return filters;
-        }
-         */
-
+      
         protected string LoadFilters(SearchRequest request)
         {
             var filters = new StringBuilder();
             
             foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
             {
+                var escapedValue = string.Format("\"{0}\"",  QueryParser.Escape(filter.FieldValue.ToString()));
+
                 if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
                 {
-                    filters.Append(string.Format(" +{0}:{1}", filter.ParameterName, filter.FieldValue));
+                    filters.Append(string.Format(" +{0}:{1}", filter.ParameterName, escapedValue));
                 }
                 else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
                 {
-                    filters.Append(string.Format(" +{0}:*{1}*", filter.ParameterName, filter.FieldValue));
+                    filters.Append(string.Format(" +{0}:*{1}*", filter.ParameterName, escapedValue));
                 }
             }
 
             if (!string.IsNullOrEmpty(request.Refinements))
             {
+                
                 var currentRefinements = QueryOptions.ParseRefinementString(request.Refinements);
 
                 foreach (var refinement in currentRefinements)
                 {
-                    filters.Append(string.Format(" +{0}:{1}", refinement.ParameterName, refinement.FieldValue));
+                    var escapedValue = QueryParser.Escape(refinement.FieldValue.ToString());
+
+                    filters.Append(string.Format(" +{0}:\"{1}\"", refinement.ParameterName, escapedValue));
                 }
             }
 
-            return filters.ToString();
+            return filters.ToString().Replace("/", @"*");
         }
 
        /// <summary>
@@ -285,6 +244,8 @@ namespace MissionSearch.LuceneClient
             foreach (var facet in request.Facets)
             {
                 var sfs = new SimpleFacetedSearch(searcher.IndexReader, facet.FieldName);
+                
+                
                 var hits = sfs.Search(query);
 
                 var refinement = new Refinement()
@@ -293,21 +254,37 @@ namespace MissionSearch.LuceneClient
                     Label = facet.FieldLabel,
                     Items = new List<RefinementItem>(),
                 };
-
-                refinements.Add(refinement);
+                                
+                var categoryFacet = facet as CategoryFacet;
+                var groupLabel = refinement.Label.ToLower();
 
                 foreach (var hit in hits.HitsPerFacet)
                 {
                     if (hit.HitCount == 0)
                         continue;
 
+                    var hitValue = hit.Name.ToString();
+
+                    if(categoryFacet != null)
+                    {
+                        if (!hit.Name.ToString().Contains(categoryFacet.CategoryName.ToLower()))
+                            continue;
+
+                        if (hitValue == groupLabel)
+                            continue;
+                
+                    }
+
+                    var regex = new Regex(groupLabel);
+                    var displayName = regex.Replace(hitValue, "", 1).Trim();
+
                     var item = new RefinementItem()
                     {
                         Name = refinement.Name,
-                        GroupLabel = refinement.Label,
-                        DisplayName = hit.Name.ToString(),
+                        GroupLabel = groupLabel,
+                        DisplayName = displayName,
                         Count = hit.HitCount,
-                        Value = hit.Name.ToString(),
+                        Value = hitValue,
                         Selected = currentFilterQueries.Any(f => f.FieldValue.ToString().Contains(string.Format("{0}", hit.Name.ToString()))),
                         
                     };
@@ -318,7 +295,13 @@ namespace MissionSearch.LuceneClient
                     refinement.Items.Add(item);
                 }
 
-                refinement.Items = refinement.Items.OrderByDescending(p => p.Count).ToList();
+                
+
+                if(refinement.Items.Any())
+                {
+                    refinement.Items = refinement.Items.OrderByDescending(p => p.Count).ToList();
+                    refinements.Add(refinement);
+                }
             }
 
             foreach(var facet in request.Facets.OfType<CategoryFacet>())
@@ -574,80 +557,8 @@ namespace MissionSearch.LuceneClient
 
 
 
+               
 
-
-        SearchResponse<T> ISearchClient<T>.Search(SearchRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        SearchResponse<T> ISearchClient<T>.Search(string queryText)
-        {
-            throw new NotImplementedException();
-        }
-
-        List<T> ISearchClient<T>.GetAll(string queryText)
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient<T>.Post(T doc)
-        {
-            throw new NotImplementedException();
-        }
-
-        int ISearchClient.Timeout { get; set; }
-
-        string ISearchClient.SrchConnStr { get { throw new NotImplementedException(); } }
-
-        void ISearchClient.Post(string jsonDoc)
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient.Delete(string query)
-        {
-            throw new NotImplementedException();
-        }
-
-        SearchResponse ISearchClient.Search(SearchRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        List<string> ISearchClient.GetTerms(string fieldName, string term)
-        {
-            throw new NotImplementedException();
-        }
-
-        string ISearchClient.FileExtract(byte[] fileBytes)
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient.Commit()
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient.Close()
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient.DeleteById(string id)
-        {
-            throw new NotImplementedException();
-        }
-
-        void ISearchClient.Reload()
-        {
-            throw new NotImplementedException();
-        }
-
-        List<dynamic> ISearchClient.GetAll(string queryText)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

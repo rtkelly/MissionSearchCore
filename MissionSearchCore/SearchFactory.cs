@@ -42,6 +42,13 @@ namespace MissionSearch
             }
         }
 
+        public static IContentIndexer ContentIndexer
+        {
+            get
+            {
+                return ResolveComponent<IContentIndexer>();
+            }
+        }
 
     }
 
@@ -58,6 +65,8 @@ namespace MissionSearch
                 return ResolveComponent<IContentIndexer<T>>();
             }
         }
+
+       
 
         /// <summary>
         /// 

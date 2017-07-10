@@ -96,6 +96,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomAnalyzer\CustomAnalyzer.cs" />
+    <Compile Include="CustomAnalyzer\CustomCharTokenizer.cs" />
+    <Compile Include="CustomAnalyzer\CustomTokenFilter.cs" />
     <Compile Include="LucenceDoc.cs" />
     <Compile Include="LuceneClient.cs" />
     <Compile Include="LuceneMapper.cs" />

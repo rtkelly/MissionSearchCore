@@ -13,8 +13,6 @@ namespace MissionSearch.Crawlers
         
         public string SeedUrl { get; set; }
         
-       // public string SearchConnectionString { get; set; }
-        
         public List<string> CrawlUrlPattern { get; set; }
         
         public List<string> CrawlSkipUrlPattern { get; set; }
@@ -24,9 +22,7 @@ namespace MissionSearch.Crawlers
         public List<string> IndexSkipUrlPattern { get; set; }
         
         public List<string> LinkCleanupPattern { get; set; }
-
-        //public ILogger Logger { get; set; }
-        
+                
         public List<string> Metadata { get; set; }
         
         public int Depth { get; set; }

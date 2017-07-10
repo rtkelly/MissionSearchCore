@@ -11,15 +11,15 @@ namespace MissionSearch.Indexers
     {
         new ISearchClient<T> SearchClient { get; set; }
 
-        new IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> contentItems);
+        new IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> contentItems);
 
-        new IndexResults RunFullIndex(IEnumerable<ContentCrawlParameters> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        new IndexResults RunFullIndex(IEnumerable<ContentCrawlProxy> contentItems, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
 
         new IndexResults RunUpdate(IEnumerable<ISearchableContent> pages, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
 
-        new IndexResults RunUpdate(IEnumerable<ContentCrawlParameters> pages, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
+        new IndexResults RunUpdate(IEnumerable<ContentCrawlProxy> pages, Global<T>.StatusCallBack statusCallback, Global<T>.IndexCallBack indexerCallback);
 
-        T Update(ContentCrawlParameters contentItem);
+        T Update(ContentCrawlProxy contentItem);
 
         int Delete(IEnumerable<ISearchableContent> contentItems);
 
@@ -35,9 +35,9 @@ namespace MissionSearch.Indexers
 
         void Delete(ISearchableContent contentItem);
 
-        IndexResults RunFullIndex(List<ContentCrawlParameters> contentItems);
+        IndexResults RunFullIndex(List<ContentCrawlProxy> contentItems);
 
-        IndexResults RunUpdate(List<ContentCrawlParameters> contentItems);
+        IndexResults RunUpdate(List<ContentCrawlProxy> contentItems);
         
         
     }

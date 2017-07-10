@@ -6,14 +6,19 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Indexers
 {
-    // to do rename to crawlercontentmap
+    /// <summary>
+    /// 
+    /// </summary>
     public class CrawlerContent
     {
         public string Name { get; set; }
         public object Value { get; set; }
     }
 
-    public class ContentCrawlParameters
+    /// <summary>
+    /// 
+    /// </summary>
+    public class ContentCrawlProxy
     {
         private Dictionary<string, object> CrawlSettings { get; set; }
 
@@ -21,7 +26,7 @@ namespace MissionSearch.Indexers
         
         public ISearchableContent ContentItem { get; set; }
         
-        public ContentCrawlParameters(Dictionary<string, object> settings=null)
+        public ContentCrawlProxy(Dictionary<string, object> settings=null)
         {
             CrawlSettings = settings;
             Content = new List<CrawlerContent>();
