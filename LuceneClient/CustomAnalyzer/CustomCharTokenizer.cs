@@ -20,9 +20,14 @@ namespace MissionSearch.LuceneClient.CustomAnalyzer
             return char.ToLower(c);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         protected override bool IsTokenChar(char c)
         {
-            return char.IsLetterOrDigit(c) || c == '"' || c == ' '; //c == '/' || 
+            return char.IsLetterOrDigit(c) || c == '"' || c == ' '; 
         }
 
 

@@ -103,6 +103,7 @@
     <Compile Include="LuceneClient.cs" />
     <Compile Include="LuceneMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuerySuggester.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MissionSearchCore\MissionSearchCore.csproj">

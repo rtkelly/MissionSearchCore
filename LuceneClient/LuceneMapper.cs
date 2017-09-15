@@ -50,8 +50,7 @@ namespace MissionSearch.LuceneClient
                         
                         case "categories":
                             var categories = propValue as List<string>;
-
-                            
+                                                        
                             foreach (var category in categories ?? new List<string>())
                             {
                                 // to do: regex replace

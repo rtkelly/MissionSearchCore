@@ -112,9 +112,8 @@ namespace MissionSearch.LuceneClient
             var searcher = new IndexSearcher(reader);
 
             var query = BuildQuery(searcher, request);
-            //var filters = LoadFilters(request);
             var sortOrder = BuildSort(request);
-            //var hits =  searcher.Search(query, filters, request.End, sortOrder);
+            
             var hits = searcher.Search(query, null, request.End, sortOrder);
 
             srchResponse.TotalFound = hits.TotalHits;
@@ -151,9 +150,10 @@ namespace MissionSearch.LuceneClient
             var parser = new QueryParser(LuceneVer, SearchDefaultField, analyzer);
             
             var mainQuery = new StringBuilder();
-            mainQuery.Append("+" + request.QueryText);
 
-            //var filters = QueryParser.Escape(LoadFilters(request));
+            if(!string.IsNullOrEmpty(request.QueryText))
+                mainQuery.Append(request.QueryText);
+
             var filters = LoadFilters(request);
 
             if (!string.IsNullOrEmpty(filters))
@@ -161,7 +161,7 @@ namespace MissionSearch.LuceneClient
                 mainQuery.Append(filters);
             }
             
-            var query = parser.Parse(mainQuery.ToString());
+            var query = parser.Parse(mainQuery.ToString().Trim());
             
             return query;
         }
@@ -200,7 +200,7 @@ namespace MissionSearch.LuceneClient
             
             foreach (var filter in request.QueryOptions.OfType<FilterQuery>())
             {
-                var escapedValue = string.Format("\"{0}\"",  QueryParser.Escape(filter.FieldValue.ToString()));
+                var escapedValue = QueryParser.Escape(filter.FieldValue.ToString());
 
                 if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Equals)
                 {
@@ -208,7 +208,7 @@ namespace MissionSearch.LuceneClient
                 }
                 else if (filter.Condition == MissionSearch.FilterQuery.ConditionalTypes.Contains)
                 {
-                    filters.Append(string.Format(" +{0}:*{1}*", filter.ParameterName, escapedValue));
+                    filters.Append(string.Format(" +{0}:{1}*", filter.ParameterName, escapedValue));
                 }
             }
 
