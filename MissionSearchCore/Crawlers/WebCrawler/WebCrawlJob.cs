@@ -31,7 +31,7 @@ namespace MissionSearch.Crawlers
 
         public int SourceId { get; set; }
 
-        public string TitlePattern { get; set; }
+        public List<string> TitlePattern { get; set; }
         
         public string SummaryPattern { get; set; }
         

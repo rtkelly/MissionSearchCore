@@ -14,7 +14,6 @@ namespace MissionSearch
         {
             var container = new WindsorContainer();
 
-            //var containerConfigFile = ConfigurationManager.AppSettings["MissionSearch.Config"];
             var containerConfigFile = "MissionSearch.Config";
             container.Install(Castle.Windsor.Installer.Configuration.FromXmlFile(containerConfigFile));
 

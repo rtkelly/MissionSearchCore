@@ -112,6 +112,7 @@
     <Compile Include="Logger\ILogger.cs" />
     <Compile Include="Logger\MissionLogger.cs" />
     <Compile Include="Search\Facets\CategoryFacet.cs" />
+    <Compile Include="Search\Facets\PivotFacet.cs" />
     <Compile Include="Search\ICMSDocument.cs" />
     <Compile Include="Indexers\IndexerBase.cs" />
     <Compile Include="Properties\Settings.Designer.cs">

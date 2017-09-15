@@ -11,7 +11,11 @@ namespace MissionSearch.Crawlers
         public int SourceId { get; set; }
 
         public int TotalCnt { get; set; }
-                
+
+        public int CrawledCnt { get; set; }
+
+        public int IndexedCnt { get; set; }
+
         public int ErrorCnt { get; set; }
 
         public int WarningCnt { get; set; }
@@ -19,6 +23,8 @@ namespace MissionSearch.Crawlers
         public TimeSpan Duration { get; set; }
 
         public bool Stopped { get; set; }
+
+        public List<IWebCrawlPage> CrawlPages { get; set; }
              
     }
 }

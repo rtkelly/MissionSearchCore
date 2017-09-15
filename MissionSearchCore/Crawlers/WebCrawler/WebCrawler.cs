@@ -118,6 +118,9 @@ namespace MissionSearch.Crawlers
                         
             var indexResults = _Indexer.RunUpdate(searchableContent, null, null);
 
+            results.CrawlPages = searchableContent;
+            results.CrawledCnt = searchableContent.Count;
+            results.IndexedCnt = indexResults.TotalCnt;
             results.TotalCnt = indexResults.TotalCnt;
             results.ErrorCnt = indexResults.ErrorCnt;
             results.Duration = (DateTime.Now - startTime);
@@ -165,6 +168,7 @@ namespace MissionSearch.Crawlers
             {
                 PageUrl =  link,
                 PageModel = searchable,
+                TitlePattern = _crawlSettings.TitlePattern,
             };
             
             var results = _pageScrapper.ScrapPage(req);

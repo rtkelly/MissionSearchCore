@@ -63,12 +63,35 @@ namespace MissionSearch.Util
             try
             {
                 var results = new PageExtractResults();
-                var resp = HttpClient.GetResponseStream(HttpClient.CallWebRequest(req.PageUrl));
+
+                var resp = HttpClient.CallWebRequest(req.PageUrl);
+
+                if (resp == null || resp.ContentType != "text/html; charset=UTF-8")
+                    return null;
+
+                var respStream = HttpClient.GetResponseStream(resp);
 
                 var doc = new HtmlDocument();
-                doc.LoadHtml(resp);
+                doc.LoadHtml(respStream);
 
-                req.PageModel.Name = !string.IsNullOrEmpty((req.TitlePattern)) ? HtmlParser.ParseStringFromHtml(doc, req.TitlePattern) : ParseTitleFromHtml(doc, req.PageUrl);
+                if (req.TitlePattern != null)
+                {
+                    //req.PageModel.Name = !string.IsNullOrEmpty((req.TitlePattern)) ? HtmlParser.ParseStringFromHtml(doc, req.TitlePattern) : ParseTitleFromHtml(doc, req.PageUrl);
+                    foreach (var titlePattern in req.TitlePattern)
+                    {
+                        var pageTitle = HtmlParser.ParseStringFromHtml(doc, titlePattern);
+
+                        if(!string.IsNullOrEmpty(pageTitle))
+                        {
+                            req.PageModel.Name = pageTitle.Trim();
+                            break;
+                        }
+                    }
+                }
+                else 
+                {
+                   req.PageModel.Name =  ParseTitleFromHtml(doc, req.PageUrl);
+                }
 
                 if (!string.IsNullOrEmpty((req.SummaryPattern)))
                 {
@@ -84,7 +107,7 @@ namespace MissionSearch.Util
 
                 req.PageModel.Content = new List<string>();
 
-                if (req.ContentPattern.Any())
+                if (req.ContentPattern != null && req.ContentPattern.Any())
                 {
                     var str = new StringBuilder();
 
@@ -95,7 +118,7 @@ namespace MissionSearch.Util
                 }
                 else
                 {
-                    req.PageModel.Content.Add(HtmlParser.ParseStringFromHtml(doc, "\\body"));
+                    req.PageModel.Content.Add(HtmlParser.ParseStringFromHtml(doc, "//body"));
                 }
 
                 return results;

@@ -12,7 +12,7 @@ namespace MissionSearch.Crawlers
 
         public IWebCrawlPage PageModel { get; set; }
 
-        public string TitlePattern { get; set; }
+        public List<string> TitlePattern { get; set; }
 
         public string SummaryPattern { get; set; }
 

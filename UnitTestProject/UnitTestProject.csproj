@@ -52,10 +52,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CrawlerTest.cs" />
     <Compile Include="SearchDocument.cs" />
     <Compile Include="SolrClientUnitTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="LuceneClientUnitTest.cs" />
+    <Compile Include="WebCrawlerSearchDoc.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LuceneClient\LuceneClient.csproj">
