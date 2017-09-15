@@ -119,12 +119,17 @@ namespace MissionSearch.Util
         /// <returns></returns>
         public static string ParseStringFromHtml(HtmlDocument doc, string xpath)
         {
-            var value = doc.DocumentNode.SelectSingleNode(xpath).InnerText;
+            var node = doc.DocumentNode.SelectSingleNode(xpath);
 
-            if (!string.IsNullOrEmpty(value))
-                return value;
+            if (node == null)
+                return null;
 
-            return null;
+            var value = node.InnerText;
+
+            if (string.IsNullOrEmpty(value))
+                return null;
+
+            return value;
         }
 
         /// <summary>

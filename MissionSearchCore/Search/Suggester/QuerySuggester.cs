@@ -25,29 +25,7 @@ namespace MissionSearch.Suggester
        {
             SrchClient = srchClient;
        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="srchConnectionString"></param>
-        /// <param name="provider"></param>
-       /*
-        public QuerySuggester(string srchConnectionString, Provider provider)
-       {
-           switch(provider)
-           {
-               //case Provider.Lucene:
-               //    SrchClient = new LuceneClient<QuerySuggesterDocument>(srchConnectionString);
-                //   break;
-
-               case Provider.Solr:
-                   SrchClient = new SolrClient<QuerySuggesterDocument>(srchConnectionString);
-                   break;
-
-           }
-           //Client = srchClient;
-       }
-        * */
+        
 
         /// <summary>
         /// 

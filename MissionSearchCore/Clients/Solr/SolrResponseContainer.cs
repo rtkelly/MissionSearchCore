@@ -63,6 +63,15 @@ namespace MissionSearch.Clients
         public Dictionary<string, List<string>> facet_fields { get; set; }
         public Dictionary<string, SolrFacetRanges> facet_ranges { get; set; }
         public Dictionary<string, int> facet_queries { get; set; }
+        public Dictionary<string, List<FacetPivot>> facet_pivot { get; set; }
+    }
+
+    internal class FacetPivot
+    {
+        public string field { get; set; }
+        public string value { get; set; }
+        public int count { get; set; }
+        public List<FacetPivot> pivot { get; set; }
     }
 
     internal class SolrFacetRanges

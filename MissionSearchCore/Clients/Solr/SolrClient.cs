@@ -164,7 +164,7 @@ namespace MissionSearch.Clients
             request.KeepAlive = true;
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             request.ContentLength = fileBytes.Length;
-
+            
             using (var requestStream = request.GetRequestStream())
             {
                 requestStream.Write(fileBytes, 0, fileBytes.Length);

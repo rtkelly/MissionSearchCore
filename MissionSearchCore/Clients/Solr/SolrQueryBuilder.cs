@@ -335,6 +335,14 @@ namespace MissionSearch.Clients
         {
             var facets = new List<string>();
 
+            var pivotFacets = request.Facets.OfType<PivotFacet>().ToList();
+
+            foreach (var facet in pivotFacets)
+            {
+                facets.Add(string.Format("&facet.pivot={0}&facet.limit={1}&facet.pivot.mincount=1", facet.FieldName, facet.facetLimit));
+                
+            }
+            
             var fieldFacets = request.Facets.OfType<FieldFacet>().ToList();
             
             foreach(var facet in fieldFacets)
