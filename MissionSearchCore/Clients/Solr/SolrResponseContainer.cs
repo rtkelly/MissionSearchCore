@@ -3,7 +3,7 @@
 namespace MissionSearch.Clients
 {
 
-    internal class SolrResponseContainer
+    public class SolrResponseContainer
     {
         public SolrResponseHeader responseHeader { get; set; }
         public SolrResponse response { get; set; }
@@ -15,7 +15,7 @@ namespace MissionSearch.Clients
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class SolrResponseContainer<T>
+    public class SolrResponseContainer<T>
     {
         public SolrResponseHeader responseHeader { get; set; }
         public SolrResponse<T> response { get; set; }
@@ -26,7 +26,7 @@ namespace MissionSearch.Clients
     /// <summary>
     /// 
     /// </summary>
-    internal class SolrResponseHeader
+    public class SolrResponseHeader
     {
         public int status { get; set; }
         public int QTime { get; set; }
@@ -37,7 +37,7 @@ namespace MissionSearch.Clients
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class SolrResponse<T>
+    public class SolrResponse<T>
     {
         public int numFound { get; set; }
         public int start { get; set; }
@@ -48,7 +48,7 @@ namespace MissionSearch.Clients
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class SolrResponse
+    public class SolrResponse
     {
         public int numFound { get; set; }
         public int start { get; set; }
@@ -58,7 +58,7 @@ namespace MissionSearch.Clients
     /// <summary>
     /// 
     /// </summary>
-    internal class SolrFacetCounts
+    public class SolrFacetCounts
     {
         public Dictionary<string, List<string>> facet_fields { get; set; }
         public Dictionary<string, SolrFacetRanges> facet_ranges { get; set; }
@@ -66,7 +66,7 @@ namespace MissionSearch.Clients
         public Dictionary<string, List<FacetPivot>> facet_pivot { get; set; }
     }
 
-    internal class FacetPivot
+    public class FacetPivot
     {
         public string field { get; set; }
         public string value { get; set; }
@@ -74,7 +74,7 @@ namespace MissionSearch.Clients
         public List<FacetPivot> pivot { get; set; }
     }
 
-    internal class SolrFacetRanges
+    public class SolrFacetRanges
     {
         public List<string> counts { get; set; }
         public string gap { get; set; }

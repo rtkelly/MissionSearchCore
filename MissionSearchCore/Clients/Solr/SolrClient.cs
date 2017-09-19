@@ -110,14 +110,14 @@ namespace MissionSearch.Clients
                     srchResponse.JsonResponse = rdr.ReadToEnd();
                 }
 
-                srchResponse.ResponseContainer = JsonConvert.DeserializeObject<SolrResponseContainer>(srchResponse.JsonResponse, new JsonSerializerSettings()
+                var responseContainer = JsonConvert.DeserializeObject<SolrResponseContainer>(srchResponse.JsonResponse, new JsonSerializerSettings()
                 {
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                 });
 
-                if (srchResponse.ResponseContainer != null)
+                if (responseContainer != null)
                 {
-                    srchResponse.Results = srchResponse.ResponseContainer.response.docs;
+                    srchResponse.Results = responseContainer.response.docs;
                 }
             }
 

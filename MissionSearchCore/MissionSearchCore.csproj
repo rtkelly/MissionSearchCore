@@ -42,28 +42,23 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Castle.Core, Version=3.3.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.3.3.0\lib\net45\Castle.Core.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\Castle.Core.3.3.3\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Castle.Windsor, Version=3.3.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Windsor.3.3.0\lib\net45\Castle.Windsor.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Castle.Windsor, Version=3.4.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Windsor.3.4.0\lib\net45\Castle.Windsor.dll</HintPath>
     </Reference>
-    <Reference Include="HtmlAgilityPack, Version=1.4.9.4, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
-      <HintPath>..\packages\HtmlAgilityPack.1.4.9.4\lib\Net45\HtmlAgilityPack.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="HtmlAgilityPack, Version=1.5.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\packages\HtmlAgilityPack.1.5.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.3.5\lib\net45\NLog.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -93,9 +88,20 @@
     <Compile Include="Attributes\RangeFacetField.cs" />
     <Compile Include="Attributes\SearchIndex.cs" />
     <Compile Include="Attributes\SortField.cs" />
+    <Compile Include="Clients\ElasticSearch\ElasticResponseContainer.cs" />
+    <Compile Include="Clients\ElasticSearch\ElsClient.cs" />
+    <Compile Include="Clients\ElasticSearch\ElsQueryBuilder.cs" />
+    <Compile Include="Clients\ElasticSearch\IElsQuery.cs" />
+    <Compile Include="Clients\ElasticSearch\IQuery.cs" />
+    <Compile Include="Clients\ElasticSearch\Query\BoolQuery.cs" />
+    <Compile Include="Clients\ElasticSearch\Query\QueryStringQuery.cs" />
     <Compile Include="Clients\ICrawler.cs" />
     <Compile Include="Clients\Nutch\NutchClient.cs" />
     <Compile Include="Clients\Nutch\NutchJob.cs" />
+    <Compile Include="Clients\Solr\ManagedResources.cs" />
+    <Compile Include="Clients\Solr\SolrClient.cs" />
+    <Compile Include="Clients\Solr\SolrQueryBuilder.cs" />
+    <Compile Include="Clients\Solr\SolrResponseContainer.cs" />
     <Compile Include="Crawlers\FolderCrawler\FolderCrawler.cs" />
     <Compile Include="Crawlers\CrawlerResults.cs" />
     <Compile Include="Crawlers\ICrawler.cs" />
@@ -120,16 +126,15 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Search\Query\CompoundQuery.cs" />
     <Compile Include="Search\Query\DateFilterQuery.cs" />
-    <Compile Include="Search\Query\DismaxQueryParm.cs" />
+    <Compile Include="Clients\Solr\DismaxQueryParm.cs" />
     <Compile Include="Search\Query\QueryParm.cs" />
     <Compile Include="Search\Refinements\RefinementBuilder.cs" />
     <Compile Include="Search\Suggester\QuerySuggesterDocument.cs" />
     <Compile Include="Search\Suggester\IQuerySuggester.cs" />
     <Compile Include="Search\Suggester\QuerySuggester.cs" />
     <Compile Include="Clients\ISearchClient.cs" />
-    <Compile Include="Clients\Solr\ManagedResources.cs" />
-    <Compile Include="Clients\Solr\SolrResponseContainer.cs" />
     <Compile Include="DIContainers.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Indexers\DefaultAssetIndexer.cs" />
@@ -153,8 +158,6 @@
     <Compile Include="Search\Query\IQueryOption.cs" />
     <Compile Include="Search\Facets\NumRangeFacet.cs" />
     <Compile Include="Search\Query\QueryOptions.cs" />
-    <Compile Include="Clients\Solr\SolrClient.cs" />
-    <Compile Include="Clients\Solr\SolrQueryBuilder.cs" />
     <Compile Include="Search\Facets\DateRangeFacet.cs" />
     <Compile Include="Search\Query\SortOrder.cs" />
     <Compile Include="Search\SearchRequest.cs" />

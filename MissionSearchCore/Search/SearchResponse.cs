@@ -14,7 +14,7 @@ namespace MissionSearch
 
         public string JsonResponse { get; set; }
 
-        internal SolrResponseContainer ResponseContainer { get; set; }
+        //public SolrResponseContainer ResponseContainer { get; set; }
 
         public List<dynamic> Results { get; set; }
 
@@ -164,7 +164,7 @@ namespace MissionSearch
                
        
 
-        internal SolrResponseContainer<T> ResponseContianer
+        public SolrResponseContainer<T> ResponseContianer
         {
             get
             {
