@@ -136,10 +136,10 @@ namespace MissionSearch.Clients
 
         public SearchResponse<T> Search(string queryText)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        List<T> ISearchClient<T>.GetAll(string queryText)
+        public new List<T> GetAll(string queryText)
         {
             /*
              * POST demoindex/_search
@@ -153,19 +153,29 @@ namespace MissionSearch.Clients
             return list;
         }
 
-        SearchResponse<T> ISearchClient<T>.Search(SearchRequest request)
+        public new SearchResponse<T> Search(SearchRequest request)
         {
-            var endPoint = string.Format("{0}/_search", SrchConnStr);
-                        
+            var elsQueryRequest = ElsQueryBuilder.BuildSearchQuery(request);
+
+            return Search(elsQueryRequest);
+        }
+
+        public SearchResponse<T> Search(IElsQueryRequest queryRequest)
+        {
             var srchResponse = new SearchResponse<T>();
-                                    
-            var jsonDoc = JsonConvert.SerializeObject(ElsQueryBuilder.BuildSearchQuery(request), new JsonSerializerSettings()
+
+            if (queryRequest.size <= 0)
+                return srchResponse;
+
+            var endPoint = string.Format("{0}/_search", SrchConnStr);
+
+            var jsonDoc = JsonConvert.SerializeObject(queryRequest, new JsonSerializerSettings()
             {
                 MissingMemberHandling = MissingMemberHandling.Ignore,
                 NullValueHandling = NullValueHandling.Ignore,
             });
 
-            jsonDoc = jsonDoc.Replace("query_bool", "bool");
+            jsonDoc = jsonDoc.Replace("bool_query", "bool");
 
             var bytes = Encoding.UTF8.GetBytes(string.Format("{0}", jsonDoc));
             var httpRequest = (HttpWebRequest)WebRequest.Create(endPoint);
@@ -204,8 +214,8 @@ namespace MissionSearch.Clients
             srchResponse.TotalFound = responseContainer.hits.total;
             srchResponse.Results = responseContainer.hits.hits.Select(h => h._source).ToList();
 
-            srchResponse.PageSize = request.PageSize;
-            srchResponse.CurrentPage = request.CurrentPage;
+            srchResponse.PageSize = queryRequest.size;
+            srchResponse.CurrentPage = queryRequest.from / queryRequest.size;
             srchResponse.Success = true;
             
             return srchResponse;

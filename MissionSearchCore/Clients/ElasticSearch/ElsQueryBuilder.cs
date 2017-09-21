@@ -8,34 +8,20 @@ namespace MissionSearch.Clients.ElasticSearch
 {
     public class ElsQueryBuilder
     {
-        public static QueryStringQuery BuildSearchQuery(SearchRequest request)
+        public static IElsQueryRequest BuildSearchQuery(SearchRequest request)
         {
-            
-            var query = new QueryStringQuery();
+            var boolRequest = ElsQueryRequest.BoolQuery();
+                        
+            boolRequest.AddTerm(Els.BoolQuery.must, "content", request.QueryText);
+            //boolRequest.AddTerm(Els.BoolQuery.filter, "title", request.QueryText);
+            //boolRequest.AddTerm(Els.BoolQuery.mustnot, "title", "puppy");
+            //boolRequest.AddDateRange(Els.BoolQuery.filter, "publication_date", DateTime.Now.AddDays(-1), DateTime.Now);
 
-            query.query = new QueryStringQuery.Query();
+            boolRequest.size = request.PageSize;
+            boolRequest.from = (request.CurrentPage-1) * request.PageSize;
 
-            query.query.query_string = new QueryString()
-            {
-                default_field = "content",
-                query = request.QueryText,
-            };
-            
-            /*
-            var query = new BoolQuery();
+            return boolRequest;
 
-            query.query = new BoolQuery.Query();
-
-            query.query.bool_query = new BoolQueries();
-
-            query.query.bool_query.must = new Dictionary<string, KeyValuePair<string, string>>();
-
-            var termQuery = new KeyValuePair<string, string>("content", request.QueryText);
-            query.query.bool_query.must.Add("term", termQuery);
-
-            //query.query.query_bool = new BoolQuery();
-            */
-            return query;
         }
     }
 }

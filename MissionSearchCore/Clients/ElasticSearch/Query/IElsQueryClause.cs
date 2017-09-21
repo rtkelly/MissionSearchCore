@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-    public class IQuery
+    public class IElsQueryClause
     {
     }
 }

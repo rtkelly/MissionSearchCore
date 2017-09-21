@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MissionSearch;
 using MissionSearch.Clients;
+using MissionSearch.Clients.ElasticSearch;
 
 namespace UnitTestProject
 {
@@ -11,13 +12,19 @@ namespace UnitTestProject
         [TestMethod]
         public void TestSearch()
         {
-            var client = new ElsClient("http://localhost:9200/demoindex");
+            var client = new ElsClient<SearchDocument>("http://localhost:9200/demoindex");
 
-            var req = new SearchRequest();
+            var boolRequest = ElsQueryRequest.BoolQuery();
 
-            req.QueryText = "robert";
+            boolRequest.AddTerm(Els.BoolQuery.must, "content", "test");
+            boolRequest.AddTerm(Els.BoolQuery.must, "title", "puppy");
+            //boolRequest.AddRange(ElsGlobal.QueryType.filter, "price", 0, 1000);
+            //boolRequest.AddDateRange(ElsGlobal.QueryType.filter, "publication_date", DateTime.Now.AddDays(-1), DateTime.Now);
 
-            var resp = client.Search(req);
+            boolRequest.size =10;
+            boolRequest.from = 0;
+            
+            var resp = client.Search(boolRequest);
 
         }
         [TestMethod]

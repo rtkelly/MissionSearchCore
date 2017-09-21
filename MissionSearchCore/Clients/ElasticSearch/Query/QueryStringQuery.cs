@@ -6,25 +6,17 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-    public class QueryStringQuery
-    {
-        public Query query { get; set; }
-
-        public class Query
-        {
-            public QueryString query_string { get; set; }
-
-        }
-    }
-    
-
-    public class QueryString
+    public class QueryStringQueryRequest : IElsQueryRequest
     {
         public string default_field { get; set; }
 
-        public string query { get; set; }
+        public ElsQuery query { get; set; }
 
         public string nullvalue { get; set; }
+
+        public int from { get; set; }
+
+        public int size { get; set; }
 
     }
 
