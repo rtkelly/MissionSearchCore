@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-    public class MatchQuery : IElsQueryClause
+    public class ElsAggs
     {
-        public Dictionary<string, string> match { get; set; }
+        //public List<Dictionary<string, IAgg>> aggs
     }
 }

@@ -6,16 +6,14 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-
-
-    public class ElsQuery
+    public interface IElsQueryRequest
     {
-      
+        int from { get; set; }
 
-        public QueryStringRequest query_string { get; set; }
+        int size { get; set; }
 
-        public BoolQueries bool_query { get; set; }
-        
-        
+        //ElsQuery query { get; set; }
+
+        string GetJsonQuery();
     }
 }

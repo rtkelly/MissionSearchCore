@@ -6,16 +6,8 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-
-
-    public class ElsQuery
+    public interface IAgg
     {
-      
 
-        public QueryStringRequest query_string { get; set; }
-
-        public BoolQueries bool_query { get; set; }
-        
-        
     }
 }

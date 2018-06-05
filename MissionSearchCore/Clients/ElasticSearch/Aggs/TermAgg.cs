@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-    public interface IElsQueryRequest
+    public class TermAgg : IAgg
     {
-        int from { get; set; }
-
-        int size { get; set; }
-
-        ElsQuery query { get; set; }
+        public Dictionary<string, string> terms { get; set; }
     }
 }

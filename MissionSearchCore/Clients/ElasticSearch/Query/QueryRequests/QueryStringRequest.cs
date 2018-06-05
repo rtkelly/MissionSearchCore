@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace MissionSearch.Clients.ElasticSearch
 {
-    public class TermQuery : IElsQueryClause
+    public class QueryStringRequest : QueryRequstBase
     {
-        public Dictionary<string, string> term { get; set; }
+        public string default_field { get; set; }
+                
+
     }
+
+
 }
+
+

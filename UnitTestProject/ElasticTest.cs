@@ -14,13 +14,18 @@ namespace UnitTestProject
         {
             var client = new ElsClient<SearchDocument>("http://localhost:9200/demoindex");
 
-            var boolRequest = ElsQueryRequest.BoolQuery();
+            var boolRequest = new BoolQueryRequest();
 
-            boolRequest.AddTerm(Els.BoolQuery.must, "content", "test");
-            boolRequest.AddTerm(Els.BoolQuery.must, "title", "puppy");
-            //boolRequest.AddRange(ElsGlobal.QueryType.filter, "price", 0, 1000);
-            //boolRequest.AddDateRange(ElsGlobal.QueryType.filter, "publication_date", DateTime.Now.AddDays(-1), DateTime.Now);
+            //boolRequest.AddMust(new TermQuery("title", "puppy"));
+            boolRequest.AddMust(new PrefixQuery("title", "pup"));
+            
+            //boolRequest.AddMust(new RangeQuery<DateTime>("publication_date", DateTime.Now.AddDays(-1), DateTime.Now));
+            boolRequest.AddMust(new RangeQuery<DateTime>("publication_date", 
+                DateTime.Now.AddDays(-1), 
+                RangeQuery<DateTime>.RangeOption.LessThenEqual));
 
+            //boolRequest.AddMust(new RangeQuery<long>("price", 0, 1000));
+                        
             boolRequest.size =10;
             boolRequest.from = 0;
             
@@ -53,8 +58,8 @@ namespace UnitTestProject
                 title = "patrick thomas",
             };
             
-            client.Post(srchDoc);
+            //client.Post(srchDoc);
 
-        }
+        } 
     }
 }

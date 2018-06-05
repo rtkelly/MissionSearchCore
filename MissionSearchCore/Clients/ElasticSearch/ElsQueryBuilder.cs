@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MissionSearch.Search.Query;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,18 +11,51 @@ namespace MissionSearch.Clients.ElasticSearch
     {
         public static IElsQueryRequest BuildSearchQuery(SearchRequest request)
         {
-            var boolRequest = ElsQueryRequest.BoolQuery();
-                        
-            boolRequest.AddTerm(Els.BoolQuery.must, "content", request.QueryText);
-            //boolRequest.AddTerm(Els.BoolQuery.filter, "title", request.QueryText);
-            //boolRequest.AddTerm(Els.BoolQuery.mustnot, "title", "puppy");
-            //boolRequest.AddDateRange(Els.BoolQuery.filter, "publication_date", DateTime.Now.AddDays(-1), DateTime.Now);
+            var boolRequest = new BoolQueryRequest();
+
+            if (!string.IsNullOrEmpty(request.QueryText))
+                boolRequest.AddMust(new TermQuery("content", request.QueryText));
 
             boolRequest.size = request.PageSize;
-            boolRequest.from = (request.CurrentPage-1) * request.PageSize;
+            boolRequest.from = (request.CurrentPage - 1) * request.PageSize;
+
+            boolRequest = AppendQueryOptions(boolRequest, request.QueryOptions);
 
             return boolRequest;
 
+        }
+
+        private static BoolQueryRequest AppendQueryOptions(BoolQueryRequest boolRequest, List<IQueryOption> queryOptions)
+        {
+            var filterEqualQueries = queryOptions
+                           .OfType<FilterQuery>()
+                           .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Equals)
+                           .Select(qp => new TermQuery(qp.ParameterName, qp.FieldValue))
+                           .ToList();
+
+            if(filterEqualQueries.Any())
+            {
+                if (boolRequest.query.bool_query.filter == null)
+                    boolRequest.query.bool_query.filter = new List<IElsQueryClause>();
+
+                boolRequest.query.bool_query.filter.AddRange(filterEqualQueries);
+            }
+
+            var filterWildcardQueries = queryOptions
+                          .OfType<FilterQuery>()
+                          .Where(fq => fq.Condition == FilterQuery.ConditionalTypes.Contains)
+                          .Select(qp => new PrefixQuery(qp.ParameterName, qp.FieldValue.ToString()));
+
+            if (filterWildcardQueries != null && filterWildcardQueries.Any())
+            {
+                if (boolRequest.query.bool_query.filter == null)
+                    boolRequest.query.bool_query.filter = new List<IElsQueryClause>();
+
+                boolRequest.query.bool_query.filter.AddRange(filterWildcardQueries);
+            }
+
+
+            return boolRequest;
         }
     }
 }

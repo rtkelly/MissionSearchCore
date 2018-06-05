@@ -169,14 +169,8 @@ namespace MissionSearch.Clients
 
             var endPoint = string.Format("{0}/_search", SrchConnStr);
 
-            var jsonDoc = JsonConvert.SerializeObject(queryRequest, new JsonSerializerSettings()
-            {
-                MissingMemberHandling = MissingMemberHandling.Ignore,
-                NullValueHandling = NullValueHandling.Ignore,
-            });
-
-            jsonDoc = jsonDoc.Replace("bool_query", "bool");
-
+            var jsonDoc = queryRequest.GetJsonQuery();
+                        
             var bytes = Encoding.UTF8.GetBytes(string.Format("{0}", jsonDoc));
             var httpRequest = (HttpWebRequest)WebRequest.Create(endPoint);
 
@@ -215,7 +209,7 @@ namespace MissionSearch.Clients
             srchResponse.Results = responseContainer.hits.hits.Select(h => h._source).ToList();
 
             srchResponse.PageSize = queryRequest.size;
-            srchResponse.CurrentPage = queryRequest.from / queryRequest.size;
+            srchResponse.CurrentPage = (queryRequest.from + queryRequest.size) / queryRequest.size;
             srchResponse.Success = true;
             
             return srchResponse;
