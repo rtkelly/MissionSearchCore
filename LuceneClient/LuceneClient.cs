@@ -105,34 +105,37 @@ namespace MissionSearch.LuceneClient
             var srchResponse = new SearchResponse();
             srchResponse.Results = new List<dynamic>();
 
-            var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr));
-            
-            var reader = IndexReader.Open(directory, true);
-            
-            var searcher = new IndexSearcher(reader);
-
-            var query = BuildQuery(searcher, request);
-            var sortOrder = BuildSort(request);
-            
-            var hits = searcher.Search(query, null, request.End, sortOrder);
-
-            srchResponse.TotalFound = hits.TotalHits;
-            srchResponse.PageSize = request.PageSize;
-            srchResponse.CurrentPage = request.CurrentPage;
-            srchResponse.Refinements = LoadRefinements(searcher, request, query);
-
-            foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
+            using (var directory = FSDirectory.Open(new System.IO.DirectoryInfo(SrchConnStr)))
             {
-                var scoreDoc = searcher.Doc(hitScore.Doc);
+                using (var reader = IndexReader.Open(directory, true))
+                {
+                    using (var searcher = new IndexSearcher(reader))
+                    {
+                        var query = BuildQuery(searcher, request);
+                        var sortOrder = BuildSort(request);
 
-                var srchDoc = new LuceneDoc(scoreDoc);
+                        var hits = searcher.Search(query, null, request.End, sortOrder);
 
-                srchResponse.Results.Add(srchDoc);
+                        srchResponse.TotalFound = hits.TotalHits;
+                        srchResponse.PageSize = request.PageSize;
+                        srchResponse.CurrentPage = request.CurrentPage;
+                        srchResponse.Refinements = LoadRefinements(searcher, request, query);
+
+                        foreach (var hitScore in hits.ScoreDocs.Skip(request.Start).Take(request.PageSize))
+                        {
+                            var scoreDoc = searcher.Doc(hitScore.Doc);
+
+                            var srchDoc = new LuceneDoc(scoreDoc);
+
+                            srchResponse.Results.Add(srchDoc);
+                        }
+
+                        srchResponse.SearchText = request.QueryText;
+
+                        return srchResponse;
+                    }
+                }
             }
-            
-            srchResponse.SearchText = request.QueryText;
-
-            return srchResponse;
         }
 
 
@@ -244,8 +247,7 @@ namespace MissionSearch.LuceneClient
             foreach (var facet in request.Facets)
             {
                 var sfs = new SimpleFacetedSearch(searcher.IndexReader, facet.FieldName);
-                
-                
+                                
                 var hits = sfs.Search(query);
 
                 var refinement = new Refinement()
@@ -294,24 +296,14 @@ namespace MissionSearch.LuceneClient
                     
                     refinement.Items.Add(item);
                 }
-
                 
-
                 if(refinement.Items.Any())
                 {
                     refinement.Items = refinement.Items.OrderByDescending(p => p.Count).ToList();
                     refinements.Add(refinement);
                 }
             }
-
-            foreach(var facet in request.Facets.OfType<CategoryFacet>())
-            {
-                var refinement = refinements.FirstOrDefault(r => r.Label == facet.FieldLabel);
-
-
-
-            }
-
+            
             return refinements; 
         }
 
