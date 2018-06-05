@@ -149,6 +149,11 @@ namespace MissionSearch.Clients
                            .OfType<DateFilterQuery>()
                            .Where(fq => fq.Condition == DateFilterQuery.ConditionalTypes.LessThenEqual)
                            .Select(qp => string.Format("&fq={0}:[* TO {1}]", qp.ParameterName, FormatToString(qp.FieldValue))).ToList();
+
+            var filterDateRangeQueries = queryOptions
+                           .OfType<RangeQuery<DateTime>>()
+                           .Select(qp => string.Format("&fq={0}:[{1} TO {2}]", qp.ParameterName, 
+                           FormatToString(qp.GreaterThenValue), FormatToString(qp.LessThenValue))).ToList();
             
             var filterWildcardQueries = queryOptions
                            .OfType<FilterQuery>()
@@ -168,15 +173,12 @@ namespace MissionSearch.Clients
                            .OfType<QueryParm>()
                            .Select(qp => ProcessQueryOption(qp.ParameterName, qp.ParameterValue)).ToList();
 
+
             if (queryParms.Any())
-            {
                 str.Append(string.Join("", queryParms));
-            }
 
             if (disMaxQueryParms.Any())
-            {
                 str.Append(string.Join("", disMaxQueryParms));
-            }
 
             if (filterEqualQueries.Any())
                 str.Append(string.Join("", filterEqualQueries));
@@ -186,6 +188,9 @@ namespace MissionSearch.Clients
 
             if (filterLessQueries.Any())
                 str.Append(string.Join("", filterLessQueries));
+
+            if(filterDateRangeQueries.Any())
+                str.Append(string.Join("", filterDateRangeQueries));
 
             if (filterWildcardQueries.Any())
                 str.Append(string.Join("", filterWildcardQueries));
