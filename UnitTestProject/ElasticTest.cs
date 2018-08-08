@@ -18,11 +18,11 @@ namespace UnitTestProject
 
             //boolRequest.AddMust(new TermQuery("title", "puppy"));
             boolRequest.AddMust(new PrefixQuery("title", "pup"));
-            
+
             //boolRequest.AddMust(new RangeQuery<DateTime>("publication_date", DateTime.Now.AddDays(-1), DateTime.Now));
-            boolRequest.AddMust(new RangeQuery<DateTime>("publication_date", 
-                DateTime.Now.AddDays(-1), 
-                RangeQuery<DateTime>.RangeOption.LessThenEqual));
+            boolRequest.AddMust(new ElsRangeQuery<DateTime>("publication_date",
+                DateTime.Now.AddDays(-1), DateFilterQuery.ConditionalTypes.GreaterThenEqual));
+                
 
             //boolRequest.AddMust(new RangeQuery<long>("price", 0, 1000));
                         

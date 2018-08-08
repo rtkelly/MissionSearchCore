@@ -15,6 +15,8 @@ namespace MissionSearch.Clients.ElasticSearch
     {
         
         public Hits<T> hits { get; set;  }
+        public Dictionary<string, List<Bucket>> aggregations { get; set; }
+        
     }
 
     public class Hits<T>
@@ -29,5 +31,13 @@ namespace MissionSearch.Clients.ElasticSearch
         public int total { get; set; }
 
         public T _source { get; set; }
+    }
+        
+    public class Bucket
+    {
+        public string key { get; set; }
+
+        public int doc_count { get; set; }
+
     }
 }

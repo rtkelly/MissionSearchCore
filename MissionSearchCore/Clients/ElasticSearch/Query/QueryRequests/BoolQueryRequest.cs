@@ -46,7 +46,15 @@ namespace MissionSearch.Clients.ElasticSearch
             query.bool_query.filter.Add(newQuery);
         }
 
-       
+        public void AddFilters(IEnumerable<IElsQueryClause> newQuery)
+        {
+            if (query.bool_query.filter == null)
+                query.bool_query.filter = new List<IElsQueryClause>();
+
+            query.bool_query.filter.AddRange(newQuery);
+        }
+
+
     }
 
     public class BoolQueries

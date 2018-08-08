@@ -103,7 +103,7 @@
     <Compile Include="Clients\ElasticSearch\Query\QueryClauses\PrefixQuery.cs" />
     <Compile Include="Clients\ElasticSearch\Query\QueryRequests\QueryRequstBase.cs" />
     <Compile Include="Clients\ElasticSearch\Query\QueryRequests\QueryStringRequest.cs" />
-    <Compile Include="Clients\ElasticSearch\Query\QueryClauses\RangeQuery.cs" />
+    <Compile Include="Clients\ElasticSearch\Query\QueryClauses\ElsRangeQuery.cs" />
     <Compile Include="Clients\ElasticSearch\Query\QueryClauses\TermQuery.cs" />
     <Compile Include="Clients\ElasticSearch\Query\QueryClauses\TermsQuery.cs" />
     <Compile Include="Clients\ElasticSearch\Query\QueryClauses\WildcardQuery.cs" />
@@ -123,6 +123,7 @@
     <Compile Include="Crawlers\WebCrawler\WebCrawlBasePage.cs" />
     <Compile Include="Crawlers\WebCrawler\WebCrawler.cs" />
     <Compile Include="Crawlers\WebCrawler\WebCrawlJob.cs" />
+    <Compile Include="Extensions\SearchRequestExtension.cs" />
     <Compile Include="Indexers\ContentCrawlProxy.cs" />
     <Compile Include="Indexers\ContentIndexer.cs" />
     <Compile Include="Indexers\ContentIndexRequest.cs" />

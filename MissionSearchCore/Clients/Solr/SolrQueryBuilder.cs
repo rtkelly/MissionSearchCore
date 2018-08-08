@@ -9,7 +9,7 @@ using System.Web;
 
 namespace MissionSearch.Clients
 {
-    internal class SolrQueryBuilder 
+    internal static class SolrQueryBuilder 
     {
         
         /// <summary>
@@ -20,39 +20,36 @@ namespace MissionSearch.Clients
         public static string BuildSearchQuery<T>(SearchRequest request) where T : ISearchDocument 
         {
             var solrQueryString = new StringBuilder();
-
-            solrQueryString.Append(string.Format("?q={0}&wt=json", request.QueryText));
-            solrQueryString.Append(AppendFields<T>(request));
-            solrQueryString.Append(AppendSort(request));
-            solrQueryString.Append(AppendFacets(request));
-            solrQueryString.Append(AppendHighlighting(request));
-            solrQueryString.Append(AppendQueryOptions(request.QueryOptions));
-            solrQueryString.Append(AppendRefinementFilters(request));
-            
-            solrQueryString.Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start));
-                        
-            return solrQueryString.ToString();
+             
+            return solrQueryString
+                .Append(string.Format("?q={0}&wt=json", request.QueryText))
+                .AppendFields<T>(request)
+                .AppendSort(request)
+                .AppendHighlighting(request)
+                .AppendFacets(request)
+                .AppendQueryOptions(request.QueryOptions)
+                .AppendRefinementFilters(request)
+                .Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start))
+                .ToString();
         }
 
         public static string BuildSearchQuery(SearchRequest request)
         {
             var solrQueryString = new StringBuilder();
 
-            solrQueryString.Append(string.Format("?q={0}&wt=json", request.QueryText));
-            //solrQueryString.Append(AppendFields(request));
-            solrQueryString.Append(AppendSort(request));
-            solrQueryString.Append(AppendFacets(request));
-            solrQueryString.Append(AppendHighlighting(request));
-            solrQueryString.Append(AppendQueryOptions(request.QueryOptions));
-            solrQueryString.Append(AppendRefinementFilters(request));
-
-            solrQueryString.Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start));
-
-            return solrQueryString.ToString();
+            return solrQueryString
+                .Append(string.Format("?q={0}&wt=json", request.QueryText))
+                .AppendSort(request)
+                .AppendHighlighting(request)
+                .AppendFacets(request)
+                .AppendQueryOptions(request.QueryOptions)
+                .AppendRefinementFilters(request)
+                .Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start))
+                .ToString();
         }
 
 
-        private static string AppendFields<T>(SearchRequest request) where T : ISearchDocument 
+        private static StringBuilder AppendFields<T>(this StringBuilder query, SearchRequest request) where T : ISearchDocument 
         {
             var docProps = typeof(T).GetProperties();
 
@@ -68,7 +65,7 @@ namespace MissionSearch.Clients
             
             var str = string.Format("&fl={0}", string.Join(",", props));
 
-            return str;
+            return query.Append(str);
         }
 
         /// <summary>
@@ -76,12 +73,12 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        private static string AppendSort(SearchRequest request)
+        private static StringBuilder AppendSort(this StringBuilder query, SearchRequest request)
         {
             var sortOptions = new List<string>();
 
             if (request.Sort == null || !request.Sort.Any())
-                return "";
+                return query;
 
             foreach (var sortOption in request.Sort)
             {
@@ -89,7 +86,7 @@ namespace MissionSearch.Clients
                     sortOption.Order == SortOrder.SortOption.Ascending ? "asc" : "desc"));
             }
 
-            return string.Format("&sort={0}", string.Join(",", sortOptions));
+            return query.Append(string.Format("&sort={0}", string.Join(",", sortOptions)));
         }
 
         /// <summary>
@@ -97,19 +94,19 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        private static string AppendHighlighting(SearchRequest request)
+        private static StringBuilder AppendHighlighting(this StringBuilder query, SearchRequest request)
         {
-            return (request.EnableHighlighting) ? "&hl.fl=highlightsummary&hl=on" : "";
+            return query.Append(request.EnableHighlighting ? "&hl.fl=highlightsummary&hl=on" : "");
         }
 
-        private static string AppendRefinementFilters(SearchRequest request)
+        private static StringBuilder AppendRefinementFilters(this StringBuilder query, SearchRequest request)
         {
             var queryOptions = QueryOptions.ParseRefinementString(request.Refinements);
 
             var str = new StringBuilder();
 
             if (queryOptions == null || !queryOptions.Any())
-                return "";
+                return query;
 
             var filterEqualQueries = queryOptions
                             //.OfType<FilterQuery>()
@@ -119,7 +116,7 @@ namespace MissionSearch.Clients
             if (filterEqualQueries.Any())
                 str.Append(string.Join("", filterEqualQueries));
 
-            return str.ToString();
+            return query.Append(str.ToString());
 
         }
        
@@ -128,12 +125,12 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="queryOptions"></param>
         /// <returns></returns>
-        private static string AppendQueryOptions(List<IQueryOption> queryOptions)
+        private static StringBuilder AppendQueryOptions(this StringBuilder query, List<IQueryOption> queryOptions)
         {
             var str = new StringBuilder();
 
             if (queryOptions == null || !queryOptions.Any())
-                return "";
+                return query;
                         
             var filterEqualQueries = queryOptions
                              .OfType<FilterQuery>()
@@ -210,7 +207,7 @@ namespace MissionSearch.Clients
                 str.Append("&defType=dismax");
             }
 
-            return str.ToString();
+            return query.Append(str.ToString());
         }
 
         /// <summary>
@@ -311,7 +308,7 @@ namespace MissionSearch.Clients
             if (!(o is string))
                 return "";
 
-            var str = o.ToString(); //.Replace("/", " ").Replace("\\", " ").Trim();
+            var str = o.ToString(); 
             
             var terms = str.Split(' ');
 
@@ -336,7 +333,7 @@ namespace MissionSearch.Clients
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        private static string AppendFacets(SearchRequest request)
+        private static StringBuilder AppendFacets(this StringBuilder query, SearchRequest request)
         {
             var facets = new List<string>();
 
@@ -370,10 +367,6 @@ namespace MissionSearch.Clients
             {
                 foreach (var gap in facet.Range)
                 {
-                    //if (gap.Lower == null)
-                    //{
-                    //    continue;
-                    //}
                     var lower = gap.Lower == null ? "*" : gap.Lower.Value.ToString(CultureInfo.InvariantCulture);
                     var upper = gap.Upper == null ? "*" : gap.Upper.Value.ToString(CultureInfo.InvariantCulture);
                     
@@ -398,18 +391,10 @@ namespace MissionSearch.Clients
             
             if (facets.Any())
             {
-                //if (request.RefinementType == RefinementType.Refinement)
-                //{
-                  //  facets.Add("&facet=on&facet.mincount=1");
-                    
-                //}
-                //else
-                //{
-                    facets.Add("&facet=on&facet.mincount=0");
-                //}
+              facets.Add("&facet=on&facet.mincount=0");
             }
 
-            return string.Join("", facets);
+            return query.Append(string.Join("", facets));
         }
 
         /*
