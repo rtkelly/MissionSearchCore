@@ -35,7 +35,7 @@ namespace MissionSearch.Indexers
     {
         
         /// <summary>
-        /// 
+        /// This method is used to assign a value to a generic object. 
         /// </summary>
         /// <param name="doc"></param>
         /// <param name="docProp"></param>
@@ -115,20 +115,23 @@ namespace MissionSearch.Indexers
 
 
         /// <summary>
-        /// 
+        /// This method checks for any content properties decorated with the SearchIndex attribute.
+        /// If the attribite contains a field name then the property value is assigned to that field in the index.
+        /// If no field name is defined the content is added to the content field in the index.
         /// </summary>
         /// <param name="page"></param>
         /// <param name="doc"></param>
         /// <param name="docProps"></param>
         /// <param name="baseType"></param>
         /// <returns></returns>
-        protected T GetBaseProperties(ISearchableContent page, T doc, PropertyInfo[] docProps, Type baseType)
+        protected T AddSearchIndexProperties(ISearchableContent page, T doc, PropertyInfo[] docProps, Type baseType)
         {
             var pageProps = baseType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
-
+                      
             // load indexed field
             foreach (var pageProp in pageProps)
             {
+                //pageProp.GetCustomAttribute()
                 var customAttr = Attribute.GetCustomAttributes(pageProp, typeof(SearchIndex));
 
                 if (!customAttr.Any())
@@ -148,8 +151,19 @@ namespace MissionSearch.Indexers
                 {
                     var value = pageProp.GetValue(page);
 
-                    if (value != null)
+                    var dateValue = value as DateTime?;
+
+                    if (dateValue != null && dateValue is DateTime?)
+                    {
+                        if(dateValue.Value != DateTime.MinValue)
+                        {
+                            SetPropertyValue(doc, docProp, dateValue.Value);
+                        }
+                    }
+                    else if (value != null)
+                    {
                         SetPropertyValue(doc, docProp, value);
+                    }
                 }
             }
 

@@ -119,7 +119,7 @@ namespace MissionSearch.Indexers
         }
 
         /// <summary>
-        /// 
+        /// This method is used to create a json version of the search document.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="crawlProperties"></param>
@@ -193,7 +193,8 @@ namespace MissionSearch.Indexers
         }
 
         /// <summary>
-        /// 
+        /// This method purges all content from the index that is no longer in 
+        /// the content provider. 
         /// </summary>
         /// <param name="contentItems"></param>
         private int PurgeDeletedDocuments(IEnumerable<ISearchableContent> contentItems)

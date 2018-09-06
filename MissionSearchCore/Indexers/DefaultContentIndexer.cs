@@ -304,18 +304,6 @@ namespace MissionSearch.Indexers
             doc.sourceid = _sourceId;
 
             var docProps = doc.GetType().GetProperties();
-
-            if (contentItem.ContentItem != null)
-            {
-                doc.id = contentItem.ContentItem._ContentID;
-                
-                var contentBaseTypes = ReflectionUtil.GetBaseTypes(contentItem.ContentItem);
-                
-                foreach (var bType in contentBaseTypes)
-                {
-                    GetBaseProperties(contentItem.ContentItem, doc, docProps, bType);
-                }
-            }
             
             if (contentItem.Content != null && contentItem.Content.Any())
             {
@@ -327,6 +315,18 @@ namespace MissionSearch.Indexers
                     {
                         SetPropertyValue(doc, docProp, crawlPropContent.Value);
                     }
+                }
+            }
+
+            if (contentItem.ContentItem != null)
+            {
+                doc.id = contentItem.ContentItem._ContentID;
+
+                var contentBaseTypes = ReflectionUtil.GetBaseTypes(contentItem.ContentItem);
+
+                foreach (var bType in contentBaseTypes)
+                {
+                    AddSearchIndexProperties(contentItem.ContentItem, doc, docProps, bType);
                 }
             }
 

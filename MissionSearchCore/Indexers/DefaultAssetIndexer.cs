@@ -190,14 +190,11 @@ namespace MissionSearch.Indexers
             var doc = (T)Activator.CreateInstance(typeof(T), new object[] { });
 
             doc.id = parameters.ContentItem._ContentID;
-            //doc.title = parameters.ContentItem.Name;
+
             doc.sourceid = _sourceId;
 
             var docProps = doc.GetType().GetProperties();
-                        
-            //var pageCrawlProps = parameters.CrawlProperties as ContentCrawlProxy;
-
-            // load crawl properties
+            
             if (parameters.Content != null && parameters.Content.Any())
             {
                 foreach (var crawlPropContent in parameters.Content)
@@ -210,10 +207,10 @@ namespace MissionSearch.Indexers
                     }
                 }
             }
+                        
+            var baseType = parameters.ContentItem.GetType().BaseType;
 
             var pageBaseTypes = new List<Type>();
-
-            var baseType = parameters.GetType().BaseType;
 
             while (baseType != null)
             {
@@ -225,7 +222,7 @@ namespace MissionSearch.Indexers
 
             foreach (var bType in pageBaseTypes)
             {
-                GetBaseProperties(parameters.ContentItem, doc, docProps, bType);
+                AddSearchIndexProperties(parameters.ContentItem, doc, docProps, bType);
             }
                        
 
