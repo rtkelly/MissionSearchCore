@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MissionSearch
+namespace MissionSearch.Search.Query
 {
     public class BoostQuery : IQueryOption
     {

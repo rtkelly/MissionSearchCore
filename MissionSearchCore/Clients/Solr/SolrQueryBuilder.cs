@@ -29,6 +29,7 @@ namespace MissionSearch.Clients
                 .AppendFacets(request)
                 .AppendQueryOptions(request.QueryOptions)
                 .AppendRefinementFilters(request)
+                .AppendBoosting(request)
                 .Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start))
                 .ToString();
         }
@@ -44,10 +45,58 @@ namespace MissionSearch.Clients
                 .AppendFacets(request)
                 .AppendQueryOptions(request.QueryOptions)
                 .AppendRefinementFilters(request)
+                .AppendBoosting(request)
                 .Append(string.Format("&rows={0}&start={1}", request.PageSize, request.Start))
                 .ToString();
         }
 
+        private static StringBuilder AppendBoosting(this StringBuilder query, SearchRequest request) 
+        {
+            if(request.BoostSettings == null)
+                return query;
+
+            var useDismax = false;
+
+            if (request.BoostSettings.TitleBoost != 0)
+            {
+                query.Append(string.Format("&bq=title:{0}^{1}", request.QueryText, request.BoostSettings.TitleBoost  ));
+                useDismax = true;
+            }
+
+            if (request.BoostSettings.SummaryBoost != 0)
+            {
+                query.Append(string.Format("&bq=summary:{0}^{1}", request.QueryText, request.BoostSettings.SummaryBoost));
+                useDismax = true;
+            }
+
+            if (request.BoostSettings.ContentBoost != 0)
+            {
+                query.Append(string.Format("&bq=content:{0}^{1}", request.QueryText, request.BoostSettings.ContentBoost));
+                useDismax = true;
+            }
+
+            if (request.BoostSettings.DocumentsBoost != 0)
+            {
+                query.Append(string.Format("&bq=pagetype:Media^{0}", request.BoostSettings.DocumentsBoost));
+                useDismax = true;
+            }
+
+            if (request.BoostSettings.DateBoost != 0)
+            {
+
+                query.Append(string.Format("&defType=dismax&bf=recip(ms(NOW,timestamp),3.16e-11,1,1)^{0}", request.BoostSettings.DateBoost));
+                useDismax = true;
+            }
+
+            if(useDismax)
+            {
+                if(query.ToString().IndexOf("&defType=dismax") == -1)
+                    query.Append("&defType=dismax");
+            }
+                        
+            return query;
+        }
+                
 
         private static StringBuilder AppendFields<T>(this StringBuilder query, SearchRequest request) where T : ISearchDocument 
         {
@@ -128,6 +177,7 @@ namespace MissionSearch.Clients
         private static StringBuilder AppendQueryOptions(this StringBuilder query, List<IQueryOption> queryOptions)
         {
             var str = new StringBuilder();
+            var useDismax = false;
 
             if (queryOptions == null || !queryOptions.Any())
                 return query;
@@ -174,9 +224,6 @@ namespace MissionSearch.Clients
             if (queryParms.Any())
                 str.Append(string.Join("", queryParms));
 
-            if (disMaxQueryParms.Any())
-                str.Append(string.Join("", disMaxQueryParms));
-
             if (filterEqualQueries.Any())
                 str.Append(string.Join("", filterEqualQueries));
 
@@ -194,15 +241,26 @@ namespace MissionSearch.Clients
 
             if (filterNotQueries.Any())
                 str.Append(string.Join("", filterNotQueries));
-                        
+
+            if (disMaxQueryParms.Any())
+            {
+                str.Append(string.Join("", disMaxQueryParms));
+                useDismax = true;
+            }
+
             var boostQueries = queryOptions
                                .OfType<BoostQuery>()
                                .Select(qp => string.Format("&bq={0}:{1}^{2}", qp.ParameterName, qp.FieldValue, qp.Boost)).ToList();
 
             if (boostQueries.Any())
+            {
                 str.Append(string.Join("", boostQueries));
+                useDismax = true;
+            }
 
-            if(boostQueries.Any() || disMaxQueryParms.Any())
+
+
+            if (useDismax)
             {
                 str.Append("&defType=dismax");
             }

@@ -36,6 +36,7 @@ namespace MissionSearch
 
         public bool EnableQueryLogging { get; set; }
         
+        public IBoostSettings BoostSettings { get; set; }
 
         public SearchRequest()
         {
